@@ -12,7 +12,8 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import chat, extract_json
+from .openrouter import (OpenRouterError, ValidationFailed, add_usage, chat,
+                         extract_json, key_usage, log_spend, run_stamp)
 
 SRC_DIR = Path("data/source")
 OUT_DIR = Path("data/translations")
@@ -49,15 +50,21 @@ def translate_one(cfg, article_path, code, model):
     prompt = prompts.build_translator_prompt(cfg, article_json)
     req = cfg["request"]
     last_errors = None
+    spent = {}
     for attempt in range(1, req["max_retries"] + 1):
-        text, usage = chat(
-            model,
-            prompt,
-            temperature=req["temperature"],
-            timeout=req["timeout_sec"],
-            max_retries=1,
-            max_tokens=req.get("max_tokens"),
-        )
+        try:
+            text, usage = chat(
+                model,
+                prompt,
+                temperature=req["temperature"],
+                timeout=req["timeout_sec"],
+                max_retries=1,
+                max_tokens=req.get("max_tokens"),
+            )
+        except OpenRouterError as err:
+            last_errors = ["transport: %s" % err]
+            continue
+        add_usage(spent, usage)
         try:
             result = extract_json(text)
         except (ValueError, json.JSONDecodeError) as err:
@@ -67,12 +74,13 @@ def translate_one(cfg, article_path, code, model):
         if not errors:
             result["article"] = source["article"]
             result["translator"] = code
-            result["usage"] = usage
+            result["usage"] = spent
             return result
         last_errors = errors
-    raise RuntimeError(
+    raise ValidationFailed(
         "%s on article %s: validation failed: %s"
-        % (model, source["article"], "; ".join(last_errors[:5]))
+        % (model, source["article"], "; ".join(last_errors[:5])),
+        spent,
     )
 
 
@@ -87,6 +95,7 @@ def main(argv):
         print("no source articles in %s; run src.convert first" % SRC_DIR)
         return 1
     failures = 0
+    usage_before = key_usage()
     for article_path in articles:
         for code, model in cfg["translators"].items():
             out = OUT_DIR / ("tr__%s__%s.json" % (article_path.stem, code))
@@ -96,6 +105,13 @@ def main(argv):
             print("translate %s with %s (%s) ..." % (article_path.stem, code, model))
             try:
                 result = translate_one(cfg, article_path, code, model)
+            except ValidationFailed as err:
+                failures += 1
+                print("  FAILED: %s" % err)
+                fail = OUT_DIR / ("fail__%s__%s__%s.json" % (article_path.stem, code, run_stamp()))
+                fail.write_text(json.dumps({"article": article_path.stem, "translator": code,
+                                            "error": str(err), "usage": err.usage}))
+                continue
             except Exception as err:  # noqa: BLE001
                 failures += 1
                 print("  FAILED: %s" % err)
@@ -104,6 +120,7 @@ def main(argv):
                 json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             print("  ok -> %s" % out.name)
+    log_spend("translate", usage_before, key_usage())
     if failures:
         print("%d translation(s) failed; rerun to retry only those" % failures)
         return 1

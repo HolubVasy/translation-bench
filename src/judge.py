@@ -14,7 +14,8 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import chat, extract_json
+from .openrouter import (OpenRouterError, ValidationFailed, add_usage, chat,
+                         extract_json, key_usage, log_spend, run_stamp)
 
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
@@ -59,15 +60,21 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
     req = cfg["request"]
     codes = [code for code, _ in shuffled]
     last_errors = None
+    spent = {}
     for attempt in range(1, req["max_retries"] + 1):
-        text, usage = chat(
-            model,
-            prompt,
-            temperature=req["temperature"],
-            timeout=req["timeout_sec"],
-            max_retries=1,
-            max_tokens=req.get("max_tokens"),
-        )
+        try:
+            text, usage = chat(
+                model,
+                prompt,
+                temperature=req["temperature"],
+                timeout=req["timeout_sec"],
+                max_retries=1,
+                max_tokens=req.get("max_tokens"),
+            )
+        except OpenRouterError as err:
+            last_errors = ["transport: %s" % err]
+            continue
+        add_usage(spent, usage)
         try:
             result = extract_json(text)
         except (ValueError, json.JSONDecodeError) as err:
@@ -78,11 +85,12 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
             result["article"] = article
             result["judge"] = judge_code
             result["presentation_order"] = codes
-            result["usage"] = usage
+            result["usage"] = spent
             return result
         last_errors = errors
-    raise RuntimeError(
-        "judge %s on article %s: %s" % (model, article, "; ".join(last_errors[:5]))
+    raise ValidationFailed(
+        "judge %s on article %s: %s" % (model, article, "; ".join(last_errors[:5])),
+        spent,
     )
 
 
@@ -94,6 +102,7 @@ def main():
         print("no sources; run src.convert first")
         return 1
     failures = 0
+    usage_before = key_usage()
     for article_path in articles:
         article = article_path.stem
         source_str = article_path.read_text(encoding="utf-8")
@@ -117,6 +126,13 @@ def main():
             print("judge %s on %s (%s) ..." % (judge_code, article, model))
             try:
                 result = judge_one(cfg, article, judge_code, model, source_str, shuffled)
+            except ValidationFailed as err:
+                failures += 1
+                print("  FAILED: %s" % err)
+                fail = OUT_DIR / ("fail__%s__by__%s__%s.json" % (article, judge_code, run_stamp()))
+                fail.write_text(json.dumps({"article": article, "judge": judge_code,
+                                            "error": str(err), "usage": err.usage}))
+                continue
             except Exception as err:  # noqa: BLE001
                 failures += 1
                 print("  FAILED: %s" % err)
@@ -125,6 +141,7 @@ def main():
                 json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             print("  ok -> %s" % out.name)
+    log_spend("judge", usage_before, key_usage())
     if failures:
         print("%d judgment(s) failed; rerun to retry only those" % failures)
         return 1

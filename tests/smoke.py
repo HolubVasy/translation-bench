@@ -114,13 +114,53 @@ def main():
                 {"judge": j, "article": "a1", "label": "M6",
                  "planted": [p["segment"] for p in planted], "caught": caught,
                  "needed": 2, "passed": len(caught) >= 2, "usage": {}}))
+        Path("data/translations/fail__a1__%s.json" % codes[0]).write_text(json.dumps(
+            {"article": "a1", "translator": codes[0], "error": "x",
+             "usage": {"prompt_tokens": 1000000, "completion_tokens": 0}}))
+        Path("data/report").mkdir(parents=True, exist_ok=True)
+        Path("data/report/spend_log.jsonl").write_text(
+            json.dumps({"stage": "translate", "before": 10.0, "after": 10.25}) + "\n"
+            + json.dumps({"stage": "judge", "before": 10.25, "after": 11.0}) + "\n")
         check(aggregate.main() == 0, "report builds")
         report = Path("data/report/summary.md").read_text()
         check("## Judge calibration" in report and "FAIL, excluded" in report,
               "calibration section and exclusion shown")
         check("## Spend USD" in report, "spend section present")
+        check("Actual spend by OpenRouter key usage: 1.0000 USD" in report, "actual spend from key usage delta")
+        price_in = cfg["prices"][codes[0]]["input"]
+        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
+              or price_in == 0, "failed but billed attempts counted in spend")
+        check("not counted (judge excluded)" in report,
+              "excluded self-judge is not shown as a 0.0 score")
+        from src.openrouter import add_usage
+        spent = {}
+        add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5})
+        add_usage(spent, {"prompt_tokens": 7})
+        check(spent == {"prompt_tokens": 17, "completion_tokens": 5},
+              "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
+        tie_dir = Path("data/judgments")
+        saved = {f: f.read_text() for f in tie_dir.glob("ev__*.json")}
+        for i, f in enumerate(sorted(saved)):
+            data = json.loads(saved[f])
+            pair = [codes[1], codes[0]] if i % 2 == 0 else [codes[0], codes[1]]
+            data["ranking"] = pair + [c for c in codes if c not in pair]
+            f.write_text(json.dumps(data))
+        for f in Path("data/calibration").glob("cal__by__*.json"):
+            f.rename(f.with_suffix(".bak"))
+        keep = sorted(saved)[:2]
+        for f in sorted(saved)[2:]:
+            f.rename(f.with_suffix(".bak"))
+        check(assemble.borda_winner() == codes[0], "Borda tie goes to the first code in config")
+        for f in tie_dir.glob("*.bak"):
+            f.rename(f.with_suffix(".json"))
+        for f in Path("data/calibration").glob("*.bak"):
+            f.rename(f.with_suffix(".json"))
+        for f, text in saved.items():
+            f.write_text(text)
+        winner = assemble.borda_winner()
+        check(winner == codes[0], "assemble winner follows only passing judges: %s" % winner)
         from docx import Document
         out = Document("data/report/assembled__a1__%s.docx" % codes[0])
         check(len(out.inline_shapes) == 1, "assembled docx contains the image")

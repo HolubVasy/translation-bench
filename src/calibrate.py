@@ -22,7 +22,7 @@ import yaml
 
 from . import prompts
 from .judge import strip_for_judge, validate_judgment
-from .openrouter import chat, extract_json
+from .openrouter import add_usage, chat, extract_json, key_usage, log_spend, run_stamp
 
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
@@ -143,6 +143,7 @@ def main():
     decoy_str = json.dumps(decoy, ensure_ascii=False, indent=1)
     req = cfg["request"]
     failures = 0
+    usage_before = key_usage()
     for judge_code, model in cfg["judges"].items():
         out = OUT_DIR / ("cal__by__%s.json" % judge_code)
         if out.exists():
@@ -151,22 +152,26 @@ def main():
         prompt = prompts.build_judge_prompt(cfg, article, judge_code, source_str, [(label, decoy_str)])
         print("calibrate %s (%s) ..." % (judge_code, model))
         result = None
+        spent = {}
         for _ in range(req["max_retries"]):
             try:
                 text, usage = chat(model, prompt, temperature=req["temperature"],
                                    timeout=req["timeout_sec"], max_retries=1,
                                    max_tokens=req.get("max_tokens"))
+                add_usage(spent, usage)
                 candidate = extract_json(text)
             except Exception as err:  # noqa: BLE001
                 print("  retry: %s" % err)
                 continue
             if not validate_judgment(candidate, [label]):
-                candidate["usage"] = usage
+                candidate["usage"] = spent
                 result = candidate
                 break
         if result is None:
             failures += 1
             print("  FAILED")
+            (OUT_DIR / ("fail__cal__by__%s__%s.json" % (judge_code, run_stamp()))).write_text(
+                json.dumps({"judge": judge_code, "usage": spent}))
             continue
         caught = score_catches(result, planted, label)
         record = {"judge": judge_code, "article": article, "label": label,
@@ -176,6 +181,7 @@ def main():
         out.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
         print("  caught %d/%d -> %s" % (len(caught), len(planted),
                                         "pass" if record["passed"] else "FAIL"))
+    log_spend("calibrate", usage_before, key_usage())
     return 1 if failures else 0
 
 

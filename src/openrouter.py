@@ -14,6 +14,15 @@ class OpenRouterError(Exception):
     pass
 
 
+class ValidationFailed(RuntimeError):
+    """All attempts answered but none passed validation. Carries the
+    usage of those billed attempts so it can still be counted."""
+
+    def __init__(self, message, usage):
+        super().__init__(message)
+        self.usage = usage
+
+
 def _api_key():
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not key:
@@ -77,3 +86,47 @@ def extract_json(text):
     if start == -1 or end == -1 or end <= start:
         raise ValueError("no JSON object found in reply")
     return json.loads(text[start : end + 1])
+
+
+def add_usage(total, usage):
+    """Accumulate token usage across attempts, so failed but billed
+    attempts still reach the spend table."""
+    for key in ("prompt_tokens", "completion_tokens"):
+        total[key] = total.get(key, 0) + int((usage or {}).get(key, 0) or 0)
+    return total
+
+
+KEY_URL = "https://openrouter.ai/api/v1/auth/key"
+SPEND_LOG = "data/report/spend_log.jsonl"
+
+
+def key_usage():
+    """Cumulative USD spent on the API key, as OpenRouter reports it.
+    None when the key or the network is unavailable."""
+    try:
+        resp = requests.get(KEY_URL, headers={"Authorization": "Bearer " + _api_key()},
+                            timeout=15)
+        if resp.status_code != 200:
+            return None
+        return float(resp.json().get("data", {}).get("usage"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def log_spend(stage, before, after):
+    """Append one paid stage run to the spend log (key usage delta)."""
+    if before is None or after is None:
+        return
+    import datetime
+    from pathlib import Path as _Path
+    path = _Path(SPEND_LOG)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    record = {"stage": stage, "before": before, "after": after,
+              "at": datetime.datetime.utcnow().isoformat(timespec="seconds")}
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record) + "\n")
+
+
+def run_stamp():
+    import datetime
+    return datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%S")

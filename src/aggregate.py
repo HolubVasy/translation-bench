@@ -48,7 +48,9 @@ def main():
     ]
     failed = {c["judge"] for c in calibration if not c.get("passed", True)}
     all_judges = {j["judge"] for j in judgments}
-    excluded = failed if failed and failed != all_judges else set()
+    # Exclude failed judges, unless that would leave no judge at all.
+    relevant = failed & all_judges
+    excluded = relevant if relevant and relevant != all_judges else set()
     all_judgments = judgments
     judgments = [j for j in judgments if j["judge"] not in excluded]
 
@@ -101,6 +103,15 @@ def main():
             + usage.get("completion_tokens", 0) / 1e6 * price["output"]
         )
         cost[code] = cost.get(code, 0.0) + dollars
+    for fail_path in TR_DIR.glob("fail__*.json"):
+        data = json.loads(fail_path.read_text(encoding="utf-8"))
+        code = data.get("translator")
+        usage = data.get("usage") or {}
+        price = cfg["prices"].get(code, {"input": 0, "output": 0})
+        cost[code] = cost.get(code, 0.0) + (
+            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
+            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
+        )
 
     lines = []
     lines.append("# Translation benchmark summary")
@@ -116,7 +127,7 @@ def main():
             lines.append("| %s | %d/%d | %d | %s |" % (
                 c["judge"], len(c["caught"]), len(c["planted"]), c["needed"],
                 "pass" if c["passed"] else "FAIL, excluded" if c["judge"] in excluded else "FAIL"))
-        if failed and not excluded:
+        if relevant and not excluded:
             lines.append("")
             lines.append("Warning: every judge failed calibration; nobody was excluded, read results with care.")
     lines.append("")
@@ -156,13 +167,24 @@ def main():
         lines.append("## Self-scoring check")
         lines.append("")
         for judge, own_code in self_judges.items():
+            if judge in excluded or not per_judge_total[judge][own_code]:
+                lines.append("- %s judging its own translation %s: not counted (judge excluded)"
+                             % (judge, own_code))
+                continue
             own = mean(per_judge_total[judge][own_code])
-            others = mean(
+            other_values = [
                 value
                 for other_judge in judge_names
                 if other_judge != judge
                 for value in per_judge_total[other_judge][own_code]
-            )
+            ]
+            if not other_values:
+                lines.append(
+                    "- %s judging its own translation %s: %.1f, no other judge to compare"
+                    % (judge, own_code, own)
+                )
+                continue
+            others = mean(other_values)
             lines.append(
                 "- %s judging its own translation %s: %.1f vs %.1f from other judges"
                 % (judge, own_code, own, others)
@@ -170,7 +192,12 @@ def main():
 
     judge_cost = defaultdict(float)
     judge_prices = cfg.get("judge_prices", {})
-    for judgment in all_judgments + [c for c in calibration]:
+    failed_calls = [
+        json.loads(f.read_text(encoding="utf-8"))
+        for folder in (JUDG_DIR, CAL_DIR)
+        for f in folder.glob("fail__*.json")
+    ]
+    for judgment in all_judgments + list(calibration) + failed_calls:
         judge = judgment["judge"]
         usage = judgment.get("usage") or {}
         price = judge_prices.get(judge, {"input": 0, "output": 0})
@@ -188,8 +215,20 @@ def main():
     for judge in sorted(judge_cost):
         lines.append("| %s | %s | %.4f |" % (judge, cfg["judges"].get(judge, "?"), judge_cost[judge]))
     total_spend = sum(cost.values()) + sum(judge_cost.values())
-    lines.append("| total | | %.4f |" % total_spend)
+    lines.append("| total (estimate from tokens) | | %.4f |" % total_spend)
+    spend_log = Path("data/report/spend_log.jsonl")
+    if spend_log.exists():
+        actual = 0.0
+        for row in spend_log.read_text(encoding="utf-8").splitlines():
+            if row.strip():
+                rec = json.loads(row)
+                actual += rec["after"] - rec["before"]
+        lines.append("")
+        lines.append("Actual spend by OpenRouter key usage: %.4f USD. It includes any other use of"
+                     " the same key during the run and may lag by a few seconds; the per-model rows"
+                     " above are token estimates." % actual)
     missing_prices = [c for c in codes if c not in cfg.get("prices", {})]
+    missing_prices += [j for j in cfg.get("judges", {}) if j not in judge_prices]
     if missing_prices:
         lines.append("")
         lines.append("Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing_prices))
