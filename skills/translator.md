@@ -10,6 +10,7 @@ Rules:
 - Translate each segment in the context of the whole article: keep terminology consistent across segments.
 - Natural, readable $target_lang, no word-by-word translation.
 
+$glossary
 Return a single valid JSON object with the same structure, no markdown fences, no text outside JSON.
 
 ARTICLE:

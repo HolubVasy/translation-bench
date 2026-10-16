@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
+from .preflight import load_glossary
 from .openrouter import (OpenRouterError, ValidationFailed, add_usage, chat,
                          extract_json, key_usage, log_spend, run_stamp)
 
@@ -44,10 +45,10 @@ def validate_translation(source, result):
     return errors
 
 
-def translate_one(cfg, article_path, code, model):
+def translate_one(cfg, article_path, code, model, glossary=()):
     source = json.loads(article_path.read_text(encoding="utf-8"))
     article_json = json.dumps(source, ensure_ascii=False, indent=1)
-    prompt = prompts.build_translator_prompt(cfg, article_json)
+    prompt = prompts.build_translator_prompt(cfg, article_json, glossary)
     req = cfg["request"]
     last_errors = None
     spent = {}
@@ -95,6 +96,7 @@ def main(argv):
         print("no source articles in %s; run src.convert first" % SRC_DIR)
         return 1
     failures = 0
+    glossary = load_glossary(cfg)
     usage_before = key_usage()
     for article_path in articles:
         for code, model in cfg["translators"].items():
@@ -104,7 +106,7 @@ def main(argv):
                 continue
             print("translate %s with %s (%s) ..." % (article_path.stem, code, model))
             try:
-                result = translate_one(cfg, article_path, code, model)
+                result = translate_one(cfg, article_path, code, model, glossary)
             except ValidationFailed as err:
                 failures += 1
                 print("  FAILED: %s" % err)

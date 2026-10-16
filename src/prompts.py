@@ -6,6 +6,17 @@ from string import Template
 
 SKILLS_DIR = Path("skills")
 
+GLOSSARY_HEADER = "Glossary (use exactly these target terms, consistently):"
+
+
+def glossary_block(terms):
+    """Prompt text for the glossary, empty when there are no terms."""
+    if not terms:
+        return ""
+    lines = ["- %s -> %s" % (t["source"], " | ".join(t["target"])) for t in terms]
+    return GLOSSARY_HEADER + "\n" + "\n".join(lines) + "\n"
+
+
 SCORE_LINE = '    "{code}": {{"meaning": 0, "completeness": 0, "data": 0, "naturalness": 0, "flow": 0, "clean": 0, "total": 0}}'
 
 
@@ -13,15 +24,16 @@ def load_skill(name):
     return Template((SKILLS_DIR / (name + ".md")).read_text(encoding="utf-8"))
 
 
-def build_translator_prompt(cfg, article_json_str):
+def build_translator_prompt(cfg, article_json_str, glossary=()):
     return load_skill("translator").substitute(
         source_lang=cfg["source_lang"],
         target_lang=cfg["target_lang"],
         article_json=article_json_str,
+        glossary=glossary_block(glossary),
     )
 
 
-def build_judge_prompt(cfg, article_id, judge_code, source_json_str, translations):
+def build_judge_prompt(cfg, article_id, judge_code, source_json_str, translations, glossary=()):
     """translations: list of (code, json_str) in the already shuffled order."""
     labels = ", ".join(code for code, _ in translations)
     blocks = []
@@ -40,4 +52,5 @@ def build_judge_prompt(cfg, article_id, judge_code, source_json_str, translation
         scores_stub=scores_stub,
         source_json=source_json_str,
         translations_block="\n\n".join(blocks),
+        glossary=glossary_block(glossary),
     )

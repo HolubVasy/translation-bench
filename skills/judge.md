@@ -10,6 +10,7 @@ Score each translation on 6 criteria, 0-10 each:
 5. flow - coherent, good rhythm, consistent terminology across segments
 6. clean - no untranslated fragments, no translator's meta-text, placeholders preserved
 
+$glossary
 Scale anchors: 10 flawless, 8 minor issues, 5 noticeable errors but meaning intact, 2 serious distortions, 0 failed.
 
 Also rank all translations from best to worst overall.
