@@ -5,8 +5,9 @@ placeholders are replaced by the images saved at convert time
 (data/source/images/a{n}/IMAGE_{n}.png, PDF input only). A placeholder
 without an image file stays as text.
 
-The translator defaults to the overall winner by Borda points (judges that
-failed calibration excluded); pass --translator to choose another one.
+The translator defaults to the overall winner by Borda points, computed
+exactly as in the report (same exclusions, same tie-break); pass
+--translator to choose another one.
 
 Usage: python -m src.assemble [--translator M4] [a1 a2 ...]
 Output: data/report/assembled__a{n}__M{k}.docx
@@ -16,7 +17,6 @@ import argparse
 import json
 import re
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 from docx import Document
@@ -29,44 +29,20 @@ CAL_DIR = Path("data/calibration")
 OUT_DIR = Path("data/report")
 
 
-def translator_order():
+def borda_winner():
+    """Overall winner by Borda, same exclusions and tie-break as the report."""
+    from .aggregate import borda_means, excluded_judges, load_json_files
+
     import yaml
     cfg = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
-    return {code: i for i, code in enumerate(cfg.get("translators", {}))}
-
-
-def failed_judges():
-    failed = set()
-    for path in CAL_DIR.glob("cal__by__*.json"):
-        record = json.loads(path.read_text(encoding="utf-8"))
-        if not record.get("passed", True):
-            failed.add(record["judge"])
-    return failed
-
-
-def borda_winner():
-    failed = failed_judges()
-    all_judges = {json.loads(p.read_text(encoding="utf-8"))["judge"]
-                  for p in JUDG_DIR.glob("ev__*.json")}
-    # Same rule as aggregate.py: exclude failed judges, unless none would remain.
-    failed = failed & all_judges
-    if failed == all_judges:
-        failed = set()
-    points = defaultdict(list)
-    for path in JUDG_DIR.glob("ev__*.json"):
-        judgment = json.loads(path.read_text(encoding="utf-8"))
-        if judgment["judge"] in failed:
-            continue
-        ranking = judgment["ranking"]
-        for pos, code in enumerate(ranking):
-            points[code].append(len(ranking) - pos)
-    if not points:
+    judgments = load_json_files(JUDG_DIR, "ev__*.json")
+    if not judgments:
         return None
-    order = translator_order()
-    # Highest mean Borda wins; a tie goes to the code listed first in
-    # config.yaml, the same order aggregate.py uses for the report.
-    return max(points, key=lambda c: (sum(points[c]) / len(points[c]),
-                                      -order.get(c, len(order))))
+    excluded = excluded_judges(load_json_files(CAL_DIR, "cal__by__*.json"), judgments)
+    counted = [j for j in judgments if j["judge"] not in excluded]
+    codes = list(cfg["translators"])
+    borda = borda_means(counted, codes)
+    return sorted(codes, key=lambda c: -borda[c])[0]
 
 
 def assemble(article, code):
