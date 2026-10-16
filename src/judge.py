@@ -72,7 +72,8 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
                 max_tokens=req.get("max_tokens"),
             )
         except OpenRouterError as err:
-            raise ValidationFailed(str(err), spent) from err
+            last_errors = ["transport: %s" % err]
+            continue
         add_usage(spent, usage)
         try:
             result = extract_json(text)

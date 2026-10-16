@@ -140,6 +140,25 @@ def main():
               "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
+        tie_dir = Path("data/judgments")
+        saved = {f: f.read_text() for f in tie_dir.glob("ev__*.json")}
+        for i, f in enumerate(sorted(saved)):
+            data = json.loads(saved[f])
+            pair = [codes[1], codes[0]] if i % 2 == 0 else [codes[0], codes[1]]
+            data["ranking"] = pair + [c for c in codes if c not in pair]
+            f.write_text(json.dumps(data))
+        for f in Path("data/calibration").glob("cal__by__*.json"):
+            f.rename(f.with_suffix(".bak"))
+        keep = sorted(saved)[:2]
+        for f in sorted(saved)[2:]:
+            f.rename(f.with_suffix(".bak"))
+        check(assemble.borda_winner() == codes[0], "Borda tie goes to the first code in config")
+        for f in tie_dir.glob("*.bak"):
+            f.rename(f.with_suffix(".json"))
+        for f in Path("data/calibration").glob("*.bak"):
+            f.rename(f.with_suffix(".json"))
+        for f, text in saved.items():
+            f.write_text(text)
         winner = assemble.borda_winner()
         check(winner == codes[0], "assemble winner follows only passing judges: %s" % winner)
         from docx import Document

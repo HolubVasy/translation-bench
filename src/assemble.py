@@ -29,6 +29,12 @@ CAL_DIR = Path("data/calibration")
 OUT_DIR = Path("data/report")
 
 
+def translator_order():
+    import yaml
+    cfg = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
+    return {code: i for i, code in enumerate(cfg.get("translators", {}))}
+
+
 def failed_judges():
     failed = set()
     for path in CAL_DIR.glob("cal__by__*.json"):
@@ -56,7 +62,11 @@ def borda_winner():
             points[code].append(len(ranking) - pos)
     if not points:
         return None
-    return max(points, key=lambda c: sum(points[c]) / len(points[c]))
+    order = translator_order()
+    # Highest mean Borda wins; a tie goes to the code listed first in
+    # config.yaml, the same order aggregate.py uses for the report.
+    return max(points, key=lambda c: (sum(points[c]) / len(points[c]),
+                                      -order.get(c, len(order))))
 
 
 def assemble(article, code):
