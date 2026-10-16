@@ -117,11 +117,16 @@ def main():
         Path("data/translations/fail__a1__%s.json" % codes[0]).write_text(json.dumps(
             {"article": "a1", "translator": codes[0], "error": "x",
              "usage": {"prompt_tokens": 1000000, "completion_tokens": 0}}))
+        Path("data/report").mkdir(parents=True, exist_ok=True)
+        Path("data/report/spend_log.jsonl").write_text(
+            json.dumps({"stage": "translate", "before": 10.0, "after": 10.25}) + "\n"
+            + json.dumps({"stage": "judge", "before": 10.25, "after": 11.0}) + "\n")
         check(aggregate.main() == 0, "report builds")
         report = Path("data/report/summary.md").read_text()
         check("## Judge calibration" in report and "FAIL, excluded" in report,
               "calibration section and exclusion shown")
         check("## Spend USD" in report, "spend section present")
+        check("Actual spend by OpenRouter key usage: 1.0000 USD" in report, "actual spend from key usage delta")
         price_in = cfg["prices"][codes[0]]["input"]
         check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
               or price_in == 0, "failed but billed attempts counted in spend")

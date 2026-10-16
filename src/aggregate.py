@@ -215,7 +215,18 @@ def main():
     for judge in sorted(judge_cost):
         lines.append("| %s | %s | %.4f |" % (judge, cfg["judges"].get(judge, "?"), judge_cost[judge]))
     total_spend = sum(cost.values()) + sum(judge_cost.values())
-    lines.append("| total | | %.4f |" % total_spend)
+    lines.append("| total (estimate from tokens) | | %.4f |" % total_spend)
+    spend_log = Path("data/report/spend_log.jsonl")
+    if spend_log.exists():
+        actual = 0.0
+        for row in spend_log.read_text(encoding="utf-8").splitlines():
+            if row.strip():
+                rec = json.loads(row)
+                actual += rec["after"] - rec["before"]
+        lines.append("")
+        lines.append("Actual spend by OpenRouter key usage: %.4f USD. It includes any other use of"
+                     " the same key during the run and may lag by a few seconds; the per-model rows"
+                     " above are token estimates." % actual)
     missing_prices = [c for c in codes if c not in cfg.get("prices", {})]
     missing_prices += [j for j in cfg.get("judges", {}) if j not in judge_prices]
     if missing_prices:

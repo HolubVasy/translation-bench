@@ -44,6 +44,11 @@ how to read the report. This file covers how to work on the code.
     0 findings). Any confirmed finding, a red check, or a review that did
     not actually run (step finished in seconds) stops the merge and goes
     to the owner.
+11. Findings are tasks. Every confirmed review finding and every bug found
+    while working becomes a task in the owner's Notion Tasks database
+    (ID prefix TB-, title, file:line, scenario, status). The task is moved
+    to Done with the PR that fixes it. Fixing continues until the review
+    is clean; only then the merge policy applies.
 
 ## Before proposing a change
 
