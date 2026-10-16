@@ -18,6 +18,7 @@ SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
 CHECK_DIR = Path("data/checks")
 JUDG_DIR = Path("data/judgments")
+CAL_DIR = Path("data/calibration")
 OUT = Path("data/report/summary.md")
 
 CRITERIA = ("meaning", "completeness", "data", "naturalness", "flow", "clean")
@@ -41,6 +42,15 @@ def main():
     if not judgments:
         print("no judgments; run src.judge first")
         return 1
+
+    calibration = [
+        json.loads(p.read_text(encoding="utf-8")) for p in sorted(CAL_DIR.glob("cal__by__*.json"))
+    ]
+    failed = {c["judge"] for c in calibration if not c.get("passed", True)}
+    all_judges = {j["judge"] for j in judgments}
+    excluded = failed if failed and failed != all_judges else set()
+    all_judgments = judgments
+    judgments = [j for j in judgments if j["judge"] not in excluded]
 
     # Which judge model is also a participant (same OpenRouter id).
     participant_models = {model: code for code, model in cfg["translators"].items()}
@@ -96,6 +106,19 @@ def main():
     lines.append("# Translation benchmark summary")
     lines.append("")
     lines.append("Judgments: %d. Source size: %d words." % (len(judgments), total_words))
+    if calibration:
+        lines.append("")
+        lines.append("## Judge calibration")
+        lines.append("")
+        lines.append("| judge | caught | needed | result |")
+        lines.append("|---|---|---|---|")
+        for c in calibration:
+            lines.append("| %s | %d/%d | %d | %s |" % (
+                c["judge"], len(c["caught"]), len(c["planted"]), c["needed"],
+                "pass" if c["passed"] else "FAIL, excluded" if c["judge"] in excluded else "FAIL"))
+        if failed and not excluded:
+            lines.append("")
+            lines.append("Warning: every judge failed calibration; nobody was excluded, read results with care.")
     lines.append("")
     lines.append("## Overall")
     lines.append("")
@@ -147,7 +170,7 @@ def main():
 
     judge_cost = defaultdict(float)
     judge_prices = cfg.get("judge_prices", {})
-    for judgment in judgments:
+    for judgment in all_judgments + [c for c in calibration]:
         judge = judgment["judge"]
         usage = judgment.get("usage") or {}
         price = judge_prices.get(judge, {"input": 0, "output": 0})
@@ -162,7 +185,7 @@ def main():
     lines.append("|---|---|---|")
     for code in codes:
         lines.append("| %s | %s | %.4f |" % (code, cfg["translators"][code], cost.get(code, 0.0)))
-    for judge in judge_names:
+    for judge in sorted(judge_cost):
         lines.append("| %s | %s | %.4f |" % (judge, cfg["judges"].get(judge, "?"), judge_cost[judge]))
     total_spend = sum(cost.values()) + sum(judge_cost.values())
     lines.append("| total | | %.4f |" % total_spend)

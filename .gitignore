@@ -6,3 +6,5 @@ data/checks/
 data/judgments/
 data/report/
 .venv/
+data/calibration/
+data/source/images/

@@ -1,17 +1,19 @@
 """Run the whole benchmark end to end.
 
 Usage:
-  python run_all.py convert articles/1.docx articles/2.docx articles/3.docx
+  python run_all.py convert articles/1.pdf articles/2.pdf articles/3.pdf
   python run_all.py translate
   python run_all.py check
   python run_all.py judge
+  python run_all.py calibrate
   python run_all.py report
-  python run_all.py full articles/1.docx articles/2.docx articles/3.docx
+  python run_all.py assemble [--translator M4]
+  python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf
 """
 
 import sys
 
-from src import aggregate, convert, judge, mech_check, translate
+from src import aggregate, assemble, calibrate, convert, judge, mech_check, translate
 
 
 def main(argv):
@@ -27,15 +29,21 @@ def main(argv):
         return mech_check.main()
     if stage == "judge":
         return judge.main()
+    if stage == "calibrate":
+        return calibrate.main()
     if stage == "report":
         return aggregate.main()
+    if stage == "assemble":
+        return assemble.main(rest)
     if stage == "full":
         steps = [
             lambda: convert.main(rest),
             lambda: translate.main([]),
             lambda: mech_check.main(),
             lambda: judge.main(),
+            lambda: calibrate.main(),
             lambda: aggregate.main(),
+            lambda: assemble.main([]),
         ]
         for step in steps:
             code = step()

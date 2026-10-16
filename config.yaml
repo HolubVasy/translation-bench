@@ -26,6 +26,16 @@ judge_prices:
   J2: {input: 10.00, output: 50.00}
   J3: {input: 2.00, output: 10.00}
 
+# Judge calibration: a copy of one real translation with three planted errors
+# (negation, number, omission). A judge flagging fewer than min_caught of them
+# is left out of the overall tables.
+calibration:
+  enabled: true
+  article: a1
+  base_translator: M4
+  label: M6          # neutral blind label, must not clash with a translator code
+  min_caught: 2
+
 source_lang: Russian
 target_lang: English
 
