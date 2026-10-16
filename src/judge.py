@@ -90,14 +90,17 @@ def validate_judgment(result, codes):
 
 
 def _validate_scores(code, row):
+    """Problems with one score row; the total is computed only when every
+    criterion is a number in range, so a bad value can never raise."""
     if not isinstance(row, dict):
         return ["no scores for %s" % code]
     errors = []
     for criterion in CRITERIA:
         value = row.get(criterion)
-        if not isinstance(value, (int, float)) or not 0 <= value <= 10:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 10:
             errors.append("%s.%s out of range" % (code, criterion))
-    row["total"] = sum(row.get(c, 0) for c in CRITERIA)
+    if not errors:
+        row["total"] = sum(row[c] for c in CRITERIA)
     return errors
 
 

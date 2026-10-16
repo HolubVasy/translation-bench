@@ -159,3 +159,12 @@ def test_judge_refuses_a_translation_without_gate_record(tmp_path, monkeypatch):
         judge.is_disqualified("a1", "M1")
     (tmp_path / "data" / "checks" / "mech__a1__M1.json").write_text('{"disqualified": true}')
     assert judge.is_disqualified("a1", "M1") is True
+
+
+def test_validate_judgment_handles_string_and_null_scores_without_raising():
+    bad = judgment("J1", CODES)
+    bad["scores"]["M1"]["meaning"] = "8"
+    bad["scores"]["M2"]["flow"] = None
+    bad["scores"]["M3"]["clean"] = True
+    errors = validate_judgment(bad, CODES)
+    assert errors == ["M1.meaning out of range", "M2.flow out of range", "M3.clean out of range"]
