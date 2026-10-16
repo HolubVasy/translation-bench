@@ -28,7 +28,7 @@ jobs:
         id: ascii
         continue-on-error: true
         run: |
-          if grep -rnP "[^\x00-\x7F]" --include="*.py" --include="*.md" --include="*.yaml" --include="*.yml" --include="*.sh" --exclude="glossary*.yaml" --exclude-dir=data . ; then
+          if grep -rnP "[^\x00-\x7F]" --include="*.py" --include="*.md" --include="*.yaml" --include="*.yml" --include="*.sh" . ; then
             echo "non-ASCII characters found"; exit 1
           fi
       - name: Unit tests
