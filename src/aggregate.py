@@ -145,6 +145,32 @@ def main():
                 % (judge, own_code, own, others)
             )
 
+    judge_cost = defaultdict(float)
+    judge_prices = cfg.get("judge_prices", {})
+    for judgment in judgments:
+        judge = judgment["judge"]
+        usage = judgment.get("usage") or {}
+        price = judge_prices.get(judge, {"input": 0, "output": 0})
+        judge_cost[judge] += (
+            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
+            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
+        )
+    lines.append("")
+    lines.append("## Spend USD")
+    lines.append("")
+    lines.append("| who | model | cost |")
+    lines.append("|---|---|---|")
+    for code in codes:
+        lines.append("| %s | %s | %.4f |" % (code, cfg["translators"][code], cost.get(code, 0.0)))
+    for judge in judge_names:
+        lines.append("| %s | %s | %.4f |" % (judge, cfg["judges"].get(judge, "?"), judge_cost[judge]))
+    total_spend = sum(cost.values()) + sum(judge_cost.values())
+    lines.append("| total | | %.4f |" % total_spend)
+    missing_prices = [c for c in codes if c not in cfg.get("prices", {})]
+    if missing_prices:
+        lines.append("")
+        lines.append("Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing_prices))
+
     lines.append("")
     lines.append("## Flags (%d)" % len(flags))
     lines.append("")

@@ -21,6 +21,11 @@ prices:
   M4: {input: 3.00, output: 15.00}
   M5: {input: 0.10, output: 0.50}
 
+judge_prices:
+  J1: {input: 15.00, output: 75.00}   # verify current Opus 5.5 price
+  J2: {input: 10.00, output: 50.00}
+  J3: {input: 2.00, output: 10.00}
+
 source_lang: Russian
 target_lang: English
 
