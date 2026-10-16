@@ -169,6 +169,8 @@ def main():
         if result is None:
             failures += 1
             print("  FAILED")
+            (OUT_DIR / ("fail__cal__by__%s.json" % judge_code)).write_text(
+                json.dumps({"judge": judge_code, "usage": spent}))
             continue
         caught = score_catches(result, planted, label)
         record = {"judge": judge_code, "article": article, "label": label,

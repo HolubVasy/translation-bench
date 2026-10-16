@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import add_usage, chat, extract_json
+from .openrouter import ValidationFailed, add_usage, chat, extract_json
 
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
@@ -83,8 +83,9 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
             result["usage"] = spent
             return result
         last_errors = errors
-    raise RuntimeError(
-        "judge %s on article %s: %s" % (model, article, "; ".join(last_errors[:5]))
+    raise ValidationFailed(
+        "judge %s on article %s: %s" % (model, article, "; ".join(last_errors[:5])),
+        spent,
     )
 
 
@@ -119,6 +120,13 @@ def main():
             print("judge %s on %s (%s) ..." % (judge_code, article, model))
             try:
                 result = judge_one(cfg, article, judge_code, model, source_str, shuffled)
+            except ValidationFailed as err:
+                failures += 1
+                print("  FAILED: %s" % err)
+                fail = OUT_DIR / ("fail__%s__by__%s.json" % (article, judge_code))
+                fail.write_text(json.dumps({"article": article, "judge": judge_code,
+                                            "error": str(err), "usage": err.usage}))
+                continue
             except Exception as err:  # noqa: BLE001
                 failures += 1
                 print("  FAILED: %s" % err)

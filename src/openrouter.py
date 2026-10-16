@@ -14,6 +14,15 @@ class OpenRouterError(Exception):
     pass
 
 
+class ValidationFailed(RuntimeError):
+    """All attempts answered but none passed validation. Carries the
+    usage of those billed attempts so it can still be counted."""
+
+    def __init__(self, message, usage):
+        super().__init__(message)
+        self.usage = usage
+
+
 def _api_key():
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not key:

@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import add_usage, chat, extract_json
+from .openrouter import ValidationFailed, add_usage, chat, extract_json
 
 SRC_DIR = Path("data/source")
 OUT_DIR = Path("data/translations")
@@ -72,9 +72,10 @@ def translate_one(cfg, article_path, code, model):
             result["usage"] = spent
             return result
         last_errors = errors
-    raise RuntimeError(
+    raise ValidationFailed(
         "%s on article %s: validation failed: %s"
-        % (model, source["article"], "; ".join(last_errors[:5]))
+        % (model, source["article"], "; ".join(last_errors[:5])),
+        spent,
     )
 
 
@@ -98,6 +99,13 @@ def main(argv):
             print("translate %s with %s (%s) ..." % (article_path.stem, code, model))
             try:
                 result = translate_one(cfg, article_path, code, model)
+            except ValidationFailed as err:
+                failures += 1
+                print("  FAILED: %s" % err)
+                fail = OUT_DIR / ("fail__%s__%s.json" % (article_path.stem, code))
+                fail.write_text(json.dumps({"article": article_path.stem, "translator": code,
+                                            "error": str(err), "usage": err.usage}))
+                continue
             except Exception as err:  # noqa: BLE001
                 failures += 1
                 print("  FAILED: %s" % err)

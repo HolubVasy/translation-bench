@@ -114,11 +114,17 @@ def main():
                 {"judge": j, "article": "a1", "label": "M6",
                  "planted": [p["segment"] for p in planted], "caught": caught,
                  "needed": 2, "passed": len(caught) >= 2, "usage": {}}))
+        Path("data/translations/fail__a1__%s.json" % codes[0]).write_text(json.dumps(
+            {"article": "a1", "translator": codes[0], "error": "x",
+             "usage": {"prompt_tokens": 1000000, "completion_tokens": 0}}))
         check(aggregate.main() == 0, "report builds")
         report = Path("data/report/summary.md").read_text()
         check("## Judge calibration" in report and "FAIL, excluded" in report,
               "calibration section and exclusion shown")
         check("## Spend USD" in report, "spend section present")
+        price_in = cfg["prices"][codes[0]]["input"]
+        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
+              or price_in == 0, "failed but billed attempts counted in spend")
         check("not counted (judge excluded)" in report,
               "excluded self-judge is not shown as a 0.0 score")
         from src.openrouter import add_usage

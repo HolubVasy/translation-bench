@@ -103,6 +103,15 @@ def main():
             + usage.get("completion_tokens", 0) / 1e6 * price["output"]
         )
         cost[code] = cost.get(code, 0.0) + dollars
+    for fail_path in TR_DIR.glob("fail__*.json"):
+        data = json.loads(fail_path.read_text(encoding="utf-8"))
+        code = data.get("translator")
+        usage = data.get("usage") or {}
+        price = cfg["prices"].get(code, {"input": 0, "output": 0})
+        cost[code] = cost.get(code, 0.0) + (
+            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
+            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
+        )
 
     lines = []
     lines.append("# Translation benchmark summary")
@@ -183,7 +192,12 @@ def main():
 
     judge_cost = defaultdict(float)
     judge_prices = cfg.get("judge_prices", {})
-    for judgment in all_judgments + [c for c in calibration]:
+    failed_calls = [
+        json.loads(f.read_text(encoding="utf-8"))
+        for folder in (JUDG_DIR, CAL_DIR)
+        for f in folder.glob("fail__*.json")
+    ]
+    for judgment in all_judgments + list(calibration) + failed_calls:
         judge = judgment["judge"]
         usage = judgment.get("usage") or {}
         price = judge_prices.get(judge, {"input": 0, "output": 0})
