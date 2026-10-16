@@ -121,3 +121,15 @@ def test_preflight_validate_catches_broken_config(tmp_path, monkeypatch):
               "judge_prices": {"J1": {}}, "calibration": {"label": "M6", "base_translator": "M1"},
               "request": {"max_retries": 3}}
     assert validate(cfg_ok) == []
+
+
+def test_disqualified_translation_counts_as_zero_where_it_was_gated_out():
+    judged = [judgment("J1", ["M1", "M2"]), judgment("J1", ["M1", "M2", "M3"])]
+    judged[0]["article"] = "a1"
+    judged[1]["article"] = "a2"
+    disqualified = {("a1", "M3"): ["length ratio"]}
+    borda = borda_means(judged, CODES, disqualified)
+    assert borda["M3"] == 0.5  # 0 on a1, 1 on a2
+    means = criterion_means(judged, CODES, disqualified)
+    assert means["M3"]["meaning"] == 4.0  # 0 on a1, 8 on a2
+    assert borda_means(judged, CODES)["M3"] == 1.0  # without the gate info, a1 is simply absent

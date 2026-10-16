@@ -70,7 +70,9 @@ def excluded_judges(calibration, judgments):
     return relevant if relevant and relevant != present else set()
 
 
-def criterion_means(judgments, codes):
+def criterion_means(judgments, codes, disqualified=()):
+    """Mean per criterion; a translation gated out on an article scores 0
+    on that article in every judgment of it, so gating never helps."""
     scores = defaultdict(lambda: defaultdict(list))
     for judgment in judgments:
         for code in codes:
@@ -78,15 +80,23 @@ def criterion_means(judgments, codes):
             if row:
                 for criterion in CRITERIA:
                     scores[code][criterion].append(row[criterion])
+            elif (judgment["article"], code) in disqualified:
+                for criterion in CRITERIA:
+                    scores[code][criterion].append(0)
     return {code: {c: mean(scores[code][c]) for c in CRITERIA} for code in codes}
 
 
-def borda_means(judgments, codes):
+def borda_means(judgments, codes, disqualified=()):
+    """Mean Borda points; a translation gated out on an article takes 0
+    points (below last place) in every judgment of that article."""
     points = defaultdict(list)
     for judgment in judgments:
         ranking = judgment["ranking"]
         for pos, code in enumerate(ranking):
             points[code].append(len(ranking) - pos)
+        for code in codes:
+            if code not in ranking and (judgment["article"], code) in disqualified:
+                points[code].append(0)
     return {code: mean(points[code]) for code in codes}
 
 
@@ -312,10 +322,10 @@ def build_report(cfg, data):
     codes = list(cfg["translators"])
     excluded = excluded_judges(data["calibration"], data["judgments"])
     counted = [j for j in data["judgments"] if j["judge"] not in excluded]
-    means = criterion_means(counted, codes)
-    borda = borda_means(counted, codes)
-    order = sorted(codes, key=lambda c: -borda[c])
     issues, disqualified = mech_summary(data["checks"])
+    means = criterion_means(counted, codes, disqualified)
+    borda = borda_means(counted, codes, disqualified)
+    order = sorted(codes, key=lambda c: -borda[c])
     tr_cost = translator_costs(cfg, data["translations"], data["failed_translations"])
     j_cost = judge_costs(cfg, data["judgments"], data["calibration"], data["failed_judge_calls"])
     actual = actual_spend(data["spend_log"]) if data["spend_log"] else None

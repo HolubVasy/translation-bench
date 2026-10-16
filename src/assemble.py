@@ -25,13 +25,14 @@ from docx.shared import Inches
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
 JUDG_DIR = Path("data/judgments")
+CHECK_DIR = Path("data/checks")
 CAL_DIR = Path("data/calibration")
 OUT_DIR = Path("data/report")
 
 
 def borda_winner():
     """Overall winner by Borda, same exclusions and tie-break as the report."""
-    from .aggregate import borda_means, excluded_judges, load_json_files
+    from .aggregate import borda_means, excluded_judges, load_json_files, mech_summary
 
     import yaml
     cfg = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
@@ -41,7 +42,8 @@ def borda_winner():
     excluded = excluded_judges(load_json_files(CAL_DIR, "cal__by__*.json"), judgments)
     counted = [j for j in judgments if j["judge"] not in excluded]
     codes = list(cfg["translators"])
-    borda = borda_means(counted, codes)
+    _, disqualified = mech_summary(load_json_files(CHECK_DIR, "mech__*.json"))
+    borda = borda_means(counted, codes, disqualified)
     return sorted(codes, key=lambda c: -borda[c])[0]
 
 

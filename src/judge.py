@@ -177,7 +177,12 @@ def main():
         if out.exists():
             print("skip %s (exists)" % out.name)
             continue
-        translations = admitted_translations(cfg, article)
+        try:
+            translations = admitted_translations(cfg, article)
+        except FileNotFoundError as err:
+            print("missing %s" % err)
+            failures += 1
+            break
         if len(translations) < 2:
             print("skip %s: fewer than two admitted translations" % out.name)
             continue
