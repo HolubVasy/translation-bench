@@ -1,0 +1,30 @@
+# Translation benchmark configuration.
+# Verify exact OpenRouter model ids at openrouter.ai before the first run.
+
+translators:
+  M1: google/gemini-3.5-flash
+  M2: google/gemini-4-argon
+  M3: anthropic/claude-haiku-5.5
+  M4: anthropic/claude-sonnet-5.5
+  M5: openai/gpt-6-luna-pro
+
+judges:
+  J1: anthropic/claude-opus-5.5   # swap to anthropic/claude-fable-5.1 if preferred
+  J2: openai/gpt-6-astra-pro
+  J3: google/gemini-4-argon       # also a participant (M2); aggregate.py reports its self-scores separately
+
+# USD per 1M tokens, input/output. Used only for the cost column in the report.
+prices:
+  M1: {input: 0.30, output: 1.20}
+  M2: {input: 2.00, output: 10.00}
+  M3: {input: 1.00, output: 5.00}
+  M4: {input: 3.00, output: 15.00}
+  M5: {input: 0.10, output: 0.50}
+
+source_lang: Russian
+target_lang: English
+
+request:
+  temperature: 0.0
+  max_retries: 3
+  timeout_sec: 300

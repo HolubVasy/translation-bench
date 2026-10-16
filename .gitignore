@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+data/translations/
+data/checks/
+data/judgments/
+data/report/
+.venv/
