@@ -133,3 +133,11 @@ def test_disqualified_translation_counts_as_zero_where_it_was_gated_out():
     means = criterion_means(judged, CODES, disqualified)
     assert means["M3"]["meaning"] == 4.0  # 0 on a1, 8 on a2
     assert borda_means(judged, CODES)["M3"] == 1.0  # without the gate info, a1 is simply absent
+
+
+def test_stale_scores_of_a_gated_translation_are_ignored():
+    judged = [judgment("J1", ["M3", "M1", "M2"])]
+    judged[0]["article"] = "a1"
+    disqualified = {("a1", "M3"): ["length ratio"]}
+    assert borda_means(judged, CODES, disqualified) == {"M1": 2.0, "M2": 1.0, "M3": 0.0}
+    assert criterion_means(judged, CODES, disqualified)["M3"]["meaning"] == 0

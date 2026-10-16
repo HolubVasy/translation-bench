@@ -76,11 +76,12 @@ def criterion_means(judgments, codes, disqualified=()):
     scores = defaultdict(lambda: defaultdict(list))
     for judgment in judgments:
         for code in codes:
-            row = judgment["scores"].get(code)
+            gated = (judgment["article"], code) in disqualified
+            row = None if gated else judgment["scores"].get(code)
             if row:
                 for criterion in CRITERIA:
                     scores[code][criterion].append(row[criterion])
-            elif (judgment["article"], code) in disqualified:
+            elif gated:
                 for criterion in CRITERIA:
                     scores[code][criterion].append(0)
     return {code: {c: mean(scores[code][c]) for c in CRITERIA} for code in codes}
@@ -91,12 +92,12 @@ def borda_means(judgments, codes, disqualified=()):
     points (below last place) in every judgment of that article."""
     points = defaultdict(list)
     for judgment in judgments:
-        ranking = judgment["ranking"]
+        gated = [c for c in codes if (judgment["article"], c) in disqualified]
+        ranking = [c for c in judgment["ranking"] if c not in gated]
         for pos, code in enumerate(ranking):
             points[code].append(len(ranking) - pos)
-        for code in codes:
-            if code not in ranking and (judgment["article"], code) in disqualified:
-                points[code].append(0)
+        for code in gated:
+            points[code].append(0)
     return {code: mean(points[code]) for code in codes}
 
 

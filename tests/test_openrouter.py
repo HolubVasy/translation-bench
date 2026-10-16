@@ -42,4 +42,5 @@ def test_add_usage_sums_tokens_and_latency():
     add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5, "latency_sec": 1.5})
     add_usage(spent, {"prompt_tokens": 7, "latency_sec": 0.25})
     add_usage(spent, None)
-    assert spent == {"prompt_tokens": 17, "completion_tokens": 5, "latency_sec": 1.75}
+    assert spent == {"prompt_tokens": 17, "completion_tokens": 5,
+                     "latency_sec": 0.0, "latency_total_sec": 1.75}

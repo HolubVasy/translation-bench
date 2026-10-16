@@ -147,11 +147,13 @@ def extract_json(text):
 
 def add_usage(total, usage):
     """Accumulate token usage across attempts, so failed but billed
-    attempts still reach the spend table."""
+    attempts still reach the spend table. latency_sec is the latest
+    attempt (the successful one when called last), latency_total_sec the sum."""
     for key in ("prompt_tokens", "completion_tokens"):
         total[key] = total.get(key, 0) + int((usage or {}).get(key, 0) or 0)
-    total["latency_sec"] = round(
-        total.get("latency_sec", 0.0) + float((usage or {}).get("latency_sec", 0) or 0), 2)
+    latency = float((usage or {}).get("latency_sec", 0) or 0)
+    total["latency_sec"] = round(latency, 2)  # the latest attempt, i.e. the successful one
+    total["latency_total_sec"] = round(total.get("latency_total_sec", 0.0) + latency, 2)
     return total
 
 

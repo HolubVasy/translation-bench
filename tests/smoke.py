@@ -155,7 +155,7 @@ def main():
         spent = {}
         add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5})
         add_usage(spent, {"prompt_tokens": 7})
-        check(spent == {"prompt_tokens": 17, "completion_tokens": 5, "latency_sec": 0.0},
+        check(spent == {"prompt_tokens": 17, "completion_tokens": 5, "latency_sec": 0.0, "latency_total_sec": 0.0},
               "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
