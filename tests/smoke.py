@@ -119,6 +119,14 @@ def main():
         check("## Judge calibration" in report and "FAIL, excluded" in report,
               "calibration section and exclusion shown")
         check("## Spend USD" in report, "spend section present")
+        check("not counted (judge excluded)" in report,
+              "excluded self-judge is not shown as a 0.0 score")
+        from src.openrouter import add_usage
+        spent = {}
+        add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5})
+        add_usage(spent, {"prompt_tokens": 7})
+        check(spent == {"prompt_tokens": 17, "completion_tokens": 5},
+              "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
         from docx import Document

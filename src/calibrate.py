@@ -22,7 +22,7 @@ import yaml
 
 from . import prompts
 from .judge import strip_for_judge, validate_judgment
-from .openrouter import chat, extract_json
+from .openrouter import add_usage, chat, extract_json
 
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
@@ -151,17 +151,19 @@ def main():
         prompt = prompts.build_judge_prompt(cfg, article, judge_code, source_str, [(label, decoy_str)])
         print("calibrate %s (%s) ..." % (judge_code, model))
         result = None
+        spent = {}
         for _ in range(req["max_retries"]):
             try:
                 text, usage = chat(model, prompt, temperature=req["temperature"],
                                    timeout=req["timeout_sec"], max_retries=1,
                                    max_tokens=req.get("max_tokens"))
+                add_usage(spent, usage)
                 candidate = extract_json(text)
             except Exception as err:  # noqa: BLE001
                 print("  retry: %s" % err)
                 continue
             if not validate_judgment(candidate, [label]):
-                candidate["usage"] = usage
+                candidate["usage"] = spent
                 result = candidate
                 break
         if result is None:

@@ -77,3 +77,11 @@ def extract_json(text):
     if start == -1 or end == -1 or end <= start:
         raise ValueError("no JSON object found in reply")
     return json.loads(text[start : end + 1])
+
+
+def add_usage(total, usage):
+    """Accumulate token usage across attempts, so failed but billed
+    attempts still reach the spend table."""
+    for key in ("prompt_tokens", "completion_tokens"):
+        total[key] = total.get(key, 0) + int((usage or {}).get(key, 0) or 0)
+    return total

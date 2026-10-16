@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import chat, extract_json
+from .openrouter import add_usage, chat, extract_json
 
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
@@ -59,6 +59,7 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
     req = cfg["request"]
     codes = [code for code, _ in shuffled]
     last_errors = None
+    spent = {}
     for attempt in range(1, req["max_retries"] + 1):
         text, usage = chat(
             model,
@@ -68,6 +69,7 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
             max_retries=1,
             max_tokens=req.get("max_tokens"),
         )
+        add_usage(spent, usage)
         try:
             result = extract_json(text)
         except (ValueError, json.JSONDecodeError) as err:
@@ -78,7 +80,7 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
             result["article"] = article
             result["judge"] = judge_code
             result["presentation_order"] = codes
-            result["usage"] = usage
+            result["usage"] = spent
             return result
         last_errors = errors
     raise RuntimeError(

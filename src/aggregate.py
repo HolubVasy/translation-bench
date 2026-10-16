@@ -156,6 +156,10 @@ def main():
         lines.append("## Self-scoring check")
         lines.append("")
         for judge, own_code in self_judges.items():
+            if judge in excluded or not per_judge_total[judge][own_code]:
+                lines.append("- %s judging its own translation %s: not counted (judge excluded)"
+                             % (judge, own_code))
+                continue
             own = mean(per_judge_total[judge][own_code])
             others = mean(
                 value
@@ -190,6 +194,7 @@ def main():
     total_spend = sum(cost.values()) + sum(judge_cost.values())
     lines.append("| total | | %.4f |" % total_spend)
     missing_prices = [c for c in codes if c not in cfg.get("prices", {})]
+    missing_prices += [j for j in cfg.get("judges", {}) if j not in judge_prices]
     if missing_prices:
         lines.append("")
         lines.append("Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing_prices))

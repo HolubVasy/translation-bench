@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
-from .openrouter import chat, extract_json
+from .openrouter import add_usage, chat, extract_json
 
 SRC_DIR = Path("data/source")
 OUT_DIR = Path("data/translations")
@@ -49,6 +49,7 @@ def translate_one(cfg, article_path, code, model):
     prompt = prompts.build_translator_prompt(cfg, article_json)
     req = cfg["request"]
     last_errors = None
+    spent = {}
     for attempt in range(1, req["max_retries"] + 1):
         text, usage = chat(
             model,
@@ -58,6 +59,7 @@ def translate_one(cfg, article_path, code, model):
             max_retries=1,
             max_tokens=req.get("max_tokens"),
         )
+        add_usage(spent, usage)
         try:
             result = extract_json(text)
         except (ValueError, json.JSONDecodeError) as err:
@@ -67,7 +69,7 @@ def translate_one(cfg, article_path, code, model):
         if not errors:
             result["article"] = source["article"]
             result["translator"] = code
-            result["usage"] = usage
+            result["usage"] = spent
             return result
         last_errors = errors
     raise RuntimeError(
