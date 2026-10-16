@@ -28,8 +28,6 @@ how to read the report. This file covers how to work on the code.
 5. Every code change comes with a check. `tests/smoke.py` stays green and
    is extended when a stage changes; CI runs it on each PR. `data/`
    subfolders stay empty in git.
-9. Planned and parked work lives in `docs/ROADMAP.md`. Ideas found while
-   working go there instead of into the current PR.
 6. Config over code. Models, prices, languages and request settings live in
    `config.yaml`; prompt wording lives in `skills/`. If a change can be made
    there, it is not made in `src/`.
@@ -38,6 +36,14 @@ how to read the report. This file covers how to work on the code.
    passed along, not in segment text. Only `M` and `J` codes.
 8. Determinism where possible. Arithmetic (averages, Borda, spend) is done by
    `aggregate.py`, never delegated to a model. Shuffles are seeded.
+9. Planned and parked work lives in `docs/ROADMAP.md`. Ideas found while
+   working go there instead of into the current PR.
+10. Merge policy. The assistant merges its own PRs without asking, once
+    the smoke test and the ASCII check are green and the Claude review has
+    0 confirmed findings (a VERIFIED comment with C = 0, or a REVIEW with
+    0 findings). Any confirmed finding, a red check, or a review that did
+    not actually run (step finished in seconds) stops the merge and goes
+    to the owner.
 
 ## Before proposing a change
 
