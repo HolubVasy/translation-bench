@@ -28,3 +28,4 @@ request:
   temperature: 0.0
   max_retries: 3
   timeout_sec: 300
+  max_tokens: 16000

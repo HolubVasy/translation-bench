@@ -48,3 +48,10 @@ string.Template files ($placeholders). Edit the wording there; the code
 only substitutes values. config.yaml holds the model lineup (blind codes
 M1..M5, judges J1..J3) and prices; swapping a model is a one-line change
 and does not touch any prompt or code.
+
+## Key from LibreChat
+
+On the VPS the OpenRouter key already lives in the LibreChat container:
+
+    scripts/read_openrouter_key.sh        # masked
+    scripts/write_env.sh                  # copies it into .env and validates it

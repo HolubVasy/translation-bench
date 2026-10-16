@@ -21,29 +21,44 @@ def _api_key():
     return key
 
 
-def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3):
-    """Send one user message, return (text, usage dict)."""
+def _post(body, headers, timeout):
+    resp = requests.post(API_URL, headers=headers, json=body, timeout=timeout)
+    return resp.status_code, resp.text
+
+
+def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=None):
+    """Send one user message, return (text, usage dict).
+
+    Some reasoning models reject the temperature parameter with HTTP 400;
+    in that case the request is retried once without it.
+    """
     headers = {
         "Authorization": "Bearer " + _api_key(),
         "Content-Type": "application/json",
     }
     body = {
         "model": model,
-        "temperature": temperature,
         "messages": [{"role": "user", "content": prompt}],
     }
+    if temperature is not None:
+        body["temperature"] = temperature
+    if max_tokens:
+        body["max_tokens"] = max_tokens
     last_err = None
     for attempt in range(1, max_retries + 1):
         try:
-            resp = requests.post(API_URL, headers=headers, json=body, timeout=timeout)
-            if resp.status_code != 200:
-                raise OpenRouterError(
-                    "HTTP %d from %s: %s" % (resp.status_code, model, resp.text[:300])
-                )
-            data = resp.json()
-            text = data["choices"][0]["message"]["content"]
+            status, text = _post(body, headers, timeout)
+            if status == 400 and "temperature" in text.lower() and "temperature" in body:
+                body.pop("temperature")
+                status, text = _post(body, headers, timeout)
+            if status != 200:
+                raise OpenRouterError("HTTP %d from %s: %s" % (status, model, text[:300]))
+            data = json.loads(text)
+            if "error" in data:
+                raise OpenRouterError("%s: %s" % (model, str(data["error"])[:300]))
+            content = data["choices"][0]["message"]["content"]
             usage = data.get("usage", {})
-            return text, usage
+            return content, usage
         except Exception as err:  # noqa: BLE001
             last_err = err
             if attempt < max_retries:

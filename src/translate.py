@@ -56,6 +56,7 @@ def translate_one(cfg, article_path, code, model):
             temperature=req["temperature"],
             timeout=req["timeout_sec"],
             max_retries=1,
+            max_tokens=req.get("max_tokens"),
         )
         try:
             result = extract_json(text)

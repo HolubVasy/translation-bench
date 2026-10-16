@@ -66,6 +66,7 @@ def judge_one(cfg, article, judge_code, model, source_str, shuffled):
             temperature=req["temperature"],
             timeout=req["timeout_sec"],
             max_retries=1,
+            max_tokens=req.get("max_tokens"),
         )
         try:
             result = extract_json(text)
