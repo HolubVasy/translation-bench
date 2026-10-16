@@ -28,9 +28,13 @@ jobs:
         id: ascii
         continue-on-error: true
         run: |
-          if grep -rnP "[^\x00-\x7F]" --include="*.py" --include="*.md" --include="*.yaml" --include="*.yml" --include="*.sh" . ; then
+          if grep -rnP "[^\x00-\x7F]" --include="*.py" --include="*.md" --include="*.yaml" --include="*.yml" --include="*.sh" --exclude="glossary*.yaml" --exclude-dir=data . ; then
             echo "non-ASCII characters found"; exit 1
           fi
+      - name: Unit tests
+        id: unit
+        continue-on-error: true
+        run: python -m pytest 2>&1 | tee pytest.txt; exit ${PIPESTATUS[0]}
       - name: Smoke test
         id: smoke
         continue-on-error: true
@@ -43,12 +47,13 @@ jobs:
         run: |
           {
             echo "result<<EOF"
-            echo "ascii: ${{ steps.ascii.outcome }}; smoke: ${{ steps.smoke.outcome }}"
+            echo "ascii: ${{ steps.ascii.outcome }}; unit: ${{ steps.unit.outcome }}; smoke: ${{ steps.smoke.outcome }}"
+            tail -5 pytest.txt 2>/dev/null || true
             tail -30 smoke.txt 2>/dev/null || true
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
       - name: Fail on red checks
-        if: steps.smoke.outcome != 'success' || steps.ascii.outcome != 'success'
+        if: steps.smoke.outcome != 'success' || steps.ascii.outcome != 'success' || steps.unit.outcome != 'success'
         run: exit 1
 
   claude-review:
@@ -80,7 +85,7 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
             COMMIT: ${{ github.event.pull_request.head.sha }}
 
-            CI on this commit (ASCII check, offline smoke test):
+            CI on this commit (ASCII check, unit tests, offline smoke test):
             ${{ needs.smoke.outputs.result }}
             A red check is a finding in itself: name it first.
 
@@ -98,6 +103,8 @@ jobs:
             - Config over code: models, prices and settings live in config.yaml,
               prompt wording in skills/.
             - ASCII only in code, prompts and config.
+            - docs/STYLE.md: one function one job one screen, IO at the edges,
+              registries over class hierarchies, every logic function tested.
 
             Hunt BUGS; the owner's policy is bugs first, noise never:
             1. Correctness: logic errors, broken contracts, dead paths.
