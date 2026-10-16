@@ -56,6 +56,7 @@ def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=
     last_err = None
     for attempt in range(1, max_retries + 1):
         try:
+            started = time.monotonic()
             status, text = _post(body, headers, timeout)
             if status == 400 and "temperature" in text.lower() and "temperature" in body:
                 body.pop("temperature")
@@ -66,7 +67,10 @@ def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=
             if "error" in data:
                 raise OpenRouterError("%s: %s" % (model, str(data["error"])[:300]))
             content = data["choices"][0]["message"]["content"]
-            usage = data.get("usage", {})
+            usage = dict(data.get("usage") or {})
+            usage["latency_sec"] = round(time.monotonic() - started, 2)
+            if not isinstance(content, str) or not content.strip():
+                raise OpenRouterError("%s returned an empty reply" % model)
             return content, usage
         except Exception as err:  # noqa: BLE001
             last_err = err
@@ -75,17 +79,70 @@ def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=
     raise OpenRouterError("model %s failed after %d attempts: %s" % (model, max_retries, last_err))
 
 
+def _clean(text):
+    """Drop BOM and control characters a model may leak into its reply.
+    Newlines and tabs stay; they are legal inside JSON whitespace."""
+    text = text.lstrip("\ufeff").strip()
+    return "".join(ch for ch in text if ch in "\n\t" or ord(ch) >= 32)
+
+
+def _balanced_object(text):
+    """First {...} with balanced braces outside of strings, or None."""
+    depth = 0
+    start = None
+    in_str = False
+    esc = False
+    for i, ch in enumerate(text):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            if depth:
+                depth -= 1
+                if depth == 0 and start is not None:
+                    return text[start : i + 1]
+    return None
+
+
 def extract_json(text):
-    """Parse a JSON object from a model reply, tolerating markdown fences."""
-    text = text.strip()
+    """Parse a JSON object from a model reply.
+
+    Tolerates markdown fences, text before and after the object, a BOM,
+    stray control characters, control characters inside strings and
+    trailing commas. Raises ValueError when no object can be recovered."""
+    if not isinstance(text, str):
+        raise ValueError("reply is not text")
+    text = _clean(text)
     fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
     if fence:
         text = fence.group(1).strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("no JSON object found in reply")
-    return json.loads(text[start : end + 1])
+    candidates = []
+    first, last = text.find("{"), text.rfind("}")
+    if first != -1 and last > first:
+        candidates.append(text[first : last + 1])
+    balanced = _balanced_object(text)
+    if balanced and balanced not in candidates:
+        candidates.append(balanced)
+    for candidate in candidates:
+        for fixed in (candidate, re.sub(r",\s*([}\]])", r"\1", candidate)):
+            try:
+                value = json.loads(fixed, strict=False)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                return value
+    raise ValueError("no JSON object found in reply")
 
 
 def add_usage(total, usage):
@@ -93,6 +150,8 @@ def add_usage(total, usage):
     attempts still reach the spend table."""
     for key in ("prompt_tokens", "completion_tokens"):
         total[key] = total.get(key, 0) + int((usage or {}).get(key, 0) or 0)
+    total["latency_sec"] = round(
+        total.get("latency_sec", 0.0) + float((usage or {}).get("latency_sec", 0) or 0), 2)
     return total
 
 
