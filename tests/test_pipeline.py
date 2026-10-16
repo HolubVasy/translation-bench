@@ -141,3 +141,21 @@ def test_stale_scores_of_a_gated_translation_are_ignored():
     disqualified = {("a1", "M3"): ["length ratio"]}
     assert borda_means(judged, CODES, disqualified) == {"M1": 2.0, "M2": 1.0, "M3": 0.0}
     assert criterion_means(judged, CODES, disqualified)["M3"]["meaning"] == 0
+
+
+def test_validate_judgment_returns_problems_for_malformed_replies():
+    assert validate_judgment(None, CODES) == ["reply is not a JSON object"]
+    assert "ranking is not a permutation" in validate_judgment({"ranking": None, "scores": {}}, CODES)[0]
+    assert validate_judgment({"ranking": CODES, "scores": None}, CODES) == ["scores is not an object"]
+    assert validate_judgment({"ranking": CODES, "scores": {"M1": 5}}, CODES)[0] == "no scores for M1"
+
+
+def test_judge_refuses_a_translation_without_gate_record(tmp_path, monkeypatch):
+    import pytest
+    from src import judge
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "data" / "checks").mkdir(parents=True)
+    with pytest.raises(FileNotFoundError):
+        judge.is_disqualified("a1", "M1")
+    (tmp_path / "data" / "checks" / "mech__a1__M1.json").write_text('{"disqualified": true}')
+    assert judge.is_disqualified("a1", "M1") is True

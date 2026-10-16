@@ -207,9 +207,11 @@ def judge_decoy(cfg, article, judge_code, model, source_str, label, decoy_str, g
         except Exception as err:  # noqa: BLE001
             print("  retry: %s" % err)
             continue
-        if not validate_judgment(candidate, [label]):
+        errors = validate_judgment(candidate, [label])
+        if not errors:
             candidate["usage"] = spent
             return candidate
+        print("  retry: %s" % "; ".join(errors[:3]))
     write_failure(judge_code, spent)
     return None
 

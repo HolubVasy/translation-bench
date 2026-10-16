@@ -44,8 +44,11 @@ def load_translation(article, code):
 
 
 def is_disqualified(article, code):
+    """Gate verdict for one translation; the check stage must have run."""
     path = CHECK_DIR / ("mech__%s__%s.json" % (article, code))
-    return path.exists() and json.loads(path.read_text(encoding="utf-8")).get("disqualified", False)
+    if not path.exists():
+        raise FileNotFoundError("%s, run src.mech_check first" % path.name)
+    return bool(json.loads(path.read_text(encoding="utf-8")).get("disqualified", False))
 
 
 def admitted_translations(cfg, article):
@@ -70,10 +73,17 @@ def strip_for_judge(translation):
 
 
 def validate_judgment(result, codes):
+    """Problems with a judge reply, as data; a malformed reply is a list of
+    problems, never an exception."""
+    if not isinstance(result, dict):
+        return ["reply is not a JSON object"]
     errors = []
-    if sorted(result.get("ranking", [])) != sorted(codes):
+    ranking = result.get("ranking")
+    if not isinstance(ranking, list) or sorted(map(str, ranking)) != sorted(codes):
         errors.append("ranking is not a permutation of %s" % ",".join(codes))
-    scores = result.get("scores", {})
+    scores = result.get("scores")
+    if not isinstance(scores, dict):
+        return errors + ["scores is not an object"]
     for code in codes:
         errors += _validate_scores(code, scores.get(code))
     return errors
