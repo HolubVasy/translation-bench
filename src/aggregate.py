@@ -163,12 +163,19 @@ def main():
                              % (judge, own_code))
                 continue
             own = mean(per_judge_total[judge][own_code])
-            others = mean(
+            other_values = [
                 value
                 for other_judge in judge_names
                 if other_judge != judge
                 for value in per_judge_total[other_judge][own_code]
-            )
+            ]
+            if not other_values:
+                lines.append(
+                    "- %s judging its own translation %s: %.1f, no other judge to compare"
+                    % (judge, own_code, own)
+                )
+                continue
+            others = mean(other_values)
             lines.append(
                 "- %s judging its own translation %s: %.1f vs %.1f from other judges"
                 % (judge, own_code, own, others)
