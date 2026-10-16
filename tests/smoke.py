@@ -129,6 +129,8 @@ def main():
               "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
+        winner = assemble.borda_winner()
+        check(winner == codes[0], "assemble winner follows only passing judges: %s" % winner)
         from docx import Document
         out = Document("data/report/assembled__a1__%s.docx" % codes[0])
         check(len(out.inline_shapes) == 1, "assembled docx contains the image")

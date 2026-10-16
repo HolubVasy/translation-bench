@@ -42,8 +42,10 @@ def borda_winner():
     failed = failed_judges()
     all_judges = {json.loads(p.read_text(encoding="utf-8"))["judge"]
                   for p in JUDG_DIR.glob("ev__*.json")}
-    if failed and failed >= all_judges:
-        failed = set()  # same rule as aggregate.py: all failed, exclude nobody
+    # Same rule as aggregate.py: exclude failed judges, unless none would remain.
+    failed = failed & all_judges
+    if failed == all_judges:
+        failed = set()
     points = defaultdict(list)
     for path in JUDG_DIR.glob("ev__*.json"):
         judgment = json.loads(path.read_text(encoding="utf-8"))

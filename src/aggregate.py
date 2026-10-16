@@ -48,7 +48,9 @@ def main():
     ]
     failed = {c["judge"] for c in calibration if not c.get("passed", True)}
     all_judges = {j["judge"] for j in judgments}
-    excluded = failed if failed and failed != all_judges else set()
+    # Exclude failed judges, unless that would leave no judge at all.
+    relevant = failed & all_judges
+    excluded = relevant if relevant and relevant != all_judges else set()
     all_judgments = judgments
     judgments = [j for j in judgments if j["judge"] not in excluded]
 
@@ -116,7 +118,7 @@ def main():
             lines.append("| %s | %d/%d | %d | %s |" % (
                 c["judge"], len(c["caught"]), len(c["planted"]), c["needed"],
                 "pass" if c["passed"] else "FAIL, excluded" if c["judge"] in excluded else "FAIL"))
-        if failed and not excluded:
+        if relevant and not excluded:
             lines.append("")
             lines.append("Warning: every judge failed calibration; nobody was excluded, read results with care.")
     lines.append("")
