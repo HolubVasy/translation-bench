@@ -25,9 +25,11 @@ how to read the report. This file covers how to work on the code.
    mechanisms (config dictionaries, skill templates, stage runner). A new
    table, module, stage or external dependency needs explicit approval from
    the owner before it is written.
-5. Every code change comes with a check. At minimum a smoke run of the
-   affected stage on synthetic data, with the test artifacts removed
-   afterwards (`data/` subfolders stay empty in git).
+5. Every code change comes with a check. `tests/smoke.py` stays green and
+   is extended when a stage changes; CI runs it on each PR. `data/`
+   subfolders stay empty in git.
+9. Planned and parked work lives in `docs/ROADMAP.md`. Ideas found while
+   working go there instead of into the current PR.
 6. Config over code. Models, prices, languages and request settings live in
    `config.yaml`; prompt wording lives in `skills/`. If a change can be made
    there, it is not made in `src/`.

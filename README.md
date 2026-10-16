@@ -6,7 +6,7 @@ accurately and reads naturally, not to crown the strongest flagship.
 
 ## How it works
 
-1. Convert. Each `.docx` article is flattened into a JSON list of segments
+1. Convert. Each `.pdf` (or `.docx`) article is flattened into a JSON list of segments
    with structural ids (`S2-p3` = section 2, paragraph 3). Images become
    `[IMAGE_n]` placeholders and are restored by hand after the winner is chosen.
 2. Translate. Every translator model (blind codes `M1..M5`) translates every
@@ -18,9 +18,14 @@ accurately and reads naturally, not to crown the strongest flagship.
 4. Judge. Every judge model (`J1..J3`) sees one article plus all its
    translations in a per-round shuffled order, scores six criteria, ranks the
    translations and flags concrete violations with segment ids.
-5. Report. Pure arithmetic: criterion averages, Borda points from rankings,
+5. Calibrate. A copy of one real translation gets three planted errors
+   (negation, number, omission). Every judge reviews it blind; a judge that
+   misses too many is left out of the overall tables.
+6. Report. Pure arithmetic: criterion averages, Borda points from rankings,
    mechanical issue counts, real token spend per model and per judge, and a
    self-scoring check for any judge that is also a participant.
+7. Assemble. The winning translation is written back into a .docx with the
+   original images restored.
 
 The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
 
@@ -35,12 +40,16 @@ The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
       translate.py       -> data/translations/tr__a{n}__M{k}.json
       mech_check.py      -> data/checks/mech__a{n}__M{k}.json
       judge.py           -> data/judgments/ev__a{n}__by__J{k}.json
+      calibrate.py       -> data/calibration/ (answer key, judge results)
       aggregate.py       -> data/report/summary.md
+      assemble.py        -> data/report/assembled__a{n}__M{k}.docx
       openrouter.py      API client, JSON extraction
       prompts.py         fills the skill templates
     scripts/
       read_openrouter_key.sh   reads the key LibreChat already uses (masked)
       write_env.sh             copies it into .env and validates it
+    tests/smoke.py       offline end-to-end test, runs in CI on every PR
+    docs/ROADMAP.md      agreed and parked work
     run_all.py           stage runner
 
 ## Run
@@ -49,10 +58,11 @@ The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
     scripts/write_env.sh                 # on the VPS; elsewhere, fill .env by hand
     export $(cat .env)
 
-    .venv/bin/python run_all.py full articles/1.docx articles/2.docx articles/3.docx
+    .venv/bin/python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf
 
 Stages can be run one at a time: `convert`, `translate`, `check`, `judge`,
-`report`. Translate and judge skip outputs that already exist, so a failed
+`calibrate`, `report`, `assemble`. Review `data/source/a*.json` once after
+`convert`: PDF structure is recovered from layout. Translate and judge skip outputs that already exist, so a failed
 run is resumed by repeating the same command.
 
 ## Changing the lineup
@@ -76,5 +86,6 @@ number of models. Verify exact OpenRouter model ids before the first run.
 - Every change goes through a Pull Request into `main`. The only exception
   is secret configuration (`.env`), which is never committed at all.
 - Code, prompts and config are ASCII only.
-- A change to a stage comes with a smoke run of that stage on synthetic data.
+- Every change keeps `python tests/smoke.py` green; CI runs it on each PR,
+  plus an ASCII check and an automatic Claude review.
 - See `CLAUDE.md` for the working agreement with the assistant.
