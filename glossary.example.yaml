@@ -1,0 +1,10 @@
+# Terms the translation must use. Copy to glossary.yaml and point
+# config.yaml `glossary:` at it. Source is matched case-insensitively as a
+# substring; any of the target forms counts.
+terms:
+  - source: "таможенная декларация"
+    target: ["customs declaration"]
+  - source: "декларант"
+    target: ["declarant"]
+  - source: "таможенный орган"
+    target: ["customs authority", "customs authorities"]
