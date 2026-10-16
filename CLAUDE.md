@@ -15,6 +15,12 @@ how to read the report. This file covers how to work on the code.
    `main`, including documentation and config edits. Secret configuration
    means `.env` and nothing else; it is gitignored and is never committed,
    so it never needs a PR either.
+10. Merge policy. The assistant merges its own PRs without asking, once
+    the smoke test and the ASCII check are green and the Claude review has
+    0 confirmed findings (a VERIFIED comment with C = 0, or a REVIEW with
+    0 findings). Any confirmed finding, a red check, or a review that did
+    not actually run (step finished in seconds) stops the merge and goes
+    to the owner.
 2. Secrets never enter git, logs, reports or chat. Keys are read from the
    environment. When a key must be shown, show it masked
    (`scripts/read_openrouter_key.sh` does this).

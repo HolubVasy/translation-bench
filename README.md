@@ -83,7 +83,8 @@ number of models. Verify exact OpenRouter model ids before the first run.
 
 ## Contributing
 
-- Every change goes through a Pull Request into `main`. The only exception
+- Every change goes through a Pull Request into `main`. The assistant
+  merges it once CI and the Claude review are clean (see `CLAUDE.md`). The only exception
   is secret configuration (`.env`), which is never committed at all.
 - Code, prompts and config are ASCII only.
 - Every change keeps `python tests/smoke.py` green; CI runs it on each PR,
