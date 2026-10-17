@@ -1,5 +1,7 @@
 """Unit tests for judge validation, ordering, calibration planters and aggregation."""
 
+import json
+
 from src.aggregate import (borda_means, criterion_means, excluded_judges, judge_agreement,
                            kendall_tau, position_consistency)
 from src.calibrate import caught_by_kind, make_decoy, score_catches
@@ -168,3 +170,28 @@ def test_validate_judgment_handles_string_and_null_scores_without_raising():
     bad["scores"]["M3"]["clean"] = True
     errors = validate_judgment(bad, CODES)
     assert errors == ["M1.meaning out of range", "M2.flow out of range", "M3.clean out of range"]
+
+
+def test_assemble_falls_back_when_the_winner_is_gated_out_on_an_article(tmp_path, monkeypatch):
+    from src import assemble
+    monkeypatch.chdir(tmp_path)
+    for folder in ("data/checks", "data/judgments", "data/calibration"):
+        (tmp_path / folder).mkdir(parents=True)
+    (tmp_path / "config.yaml").write_text("translators: {M1: a, M2: b, M3: c}\n")
+    (tmp_path / "data/checks/mech__a2__M1.json").write_text('{"disqualified": true}')
+    j = judgment("J1", ["M1", "M3", "M2"])
+    j["article"] = "a2"
+    (tmp_path / "data/judgments/ev__a2__by__J1.json").write_text(json.dumps(j))
+    assert assemble.pick_for_article("a1", "M1") == "M1"
+    assert assemble.pick_for_article("a2", "M1") == "M3"
+
+
+def test_make_decoy_defaults_to_every_planter():
+    from src.calibrate import PLANTERS
+    translation = {"article": "1", "segments": [
+        {"id": "S1-p%d" % i, "section": 1, "type": "p", "text": t} for i, t in enumerate([
+            "The rate is fixed and stable.", "Traders pay 25 percent of the value.",
+            "This is a long paragraph with many words in it. It has two sentences.",
+            "Traders may file online.", "This applies only once."])]}
+    _, planted = make_decoy(translation)
+    assert [p["kind"] for p in planted] == list(PLANTERS)

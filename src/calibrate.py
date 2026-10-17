@@ -55,8 +55,8 @@ def calibration_settings(cfg):
     cal.setdefault("article", "a1")
     cal.setdefault("base_translator", "M4")
     cal.setdefault("label", "M6")
-    cal.setdefault("min_caught", 2)
-    cal.setdefault("kinds", ["negation", "number", "omission", "modality"])
+    cal.setdefault("min_caught", 3)
+    cal.setdefault("kinds", None)  # None = every planter in PLANTERS
     return cal
 
 
@@ -120,13 +120,13 @@ PLANTERS = {
 # ------------------------------------------------------------ logic
 
 
-def make_decoy(translation, kinds=("negation", "number", "omission", "modality")):
+def make_decoy(translation, kinds=None):
     """Return (decoy, planted). Each kind goes into a different paragraph;
     omission prefers the longest paragraph."""
     decoy = copy.deepcopy(translation)
     paragraphs = [s for s in decoy["segments"] if s["type"] == "p"]
     used, planted = set(), []
-    for kind in kinds:
+    for kind in (kinds or list(PLANTERS)):
         planter = PLANTERS[kind]
         pool = sorted(paragraphs, key=lambda s: -len(s["text"])) if kind == "omission" else paragraphs
         result = _plant_in_first_free(planter, pool, used)

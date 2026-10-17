@@ -47,7 +47,42 @@ def borda_winner():
     return sorted(codes, key=lambda c: -borda[c])[0]
 
 
+def is_gated_out(article, code):
+    path = CHECK_DIR / ("mech__%s__%s.json" % (article, code))
+    return path.exists() and bool(json.loads(path.read_text(encoding="utf-8")).get("disqualified"))
+
+
+def article_winner(article, codes):
+    """Best admitted translator on one article by Borda, or None."""
+    from .aggregate import borda_means, excluded_judges, load_json_files
+
+    judgments = [j for j in load_json_files(JUDG_DIR, "ev__%s__by__*.json" % article)]
+    if not judgments:
+        return None
+    excluded = excluded_judges(load_json_files(CAL_DIR, "cal__by__*.json"), judgments)
+    counted = [j for j in judgments if j["judge"] not in excluded]
+    admitted = [c for c in codes if not is_gated_out(article, c)]
+    if not counted or not admitted:
+        return None
+    borda = borda_means(counted, admitted)
+    return sorted(admitted, key=lambda c: -borda[c])[0]
+
+
+def pick_for_article(article, code):
+    """The requested translator unless a gate disqualified it on this article."""
+    if not is_gated_out(article, code):
+        return code
+    import yaml
+    codes = list(yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))["translators"])
+    fallback = article_winner(article, codes)
+    print("%s: %s is disqualified by a gate here, using %s instead" % (article, code, fallback or "nobody"))
+    return fallback
+
+
 def assemble(article, code):
+    code = pick_for_article(article, code)
+    if code is None:
+        return None
     tr_path = TR_DIR / ("tr__%s__%s.json" % (article, code))
     if not tr_path.exists():
         print("missing %s" % tr_path)
