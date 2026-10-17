@@ -256,3 +256,12 @@ def test_actual_spend_spans_the_run_and_usage_cost_prefers_exact_cost():
     assert actual_spend([]) is None
     assert usage_cost({"prompt_tokens": 1000000, "cost": 0.25}, {"input": 10}) == 0.25
     assert usage_cost({"prompt_tokens": 1000000}, {"input": 10}) == 10.0
+
+
+def test_usage_cost_adds_an_estimate_for_attempts_without_cost():
+    from src.aggregate import usage_cost
+    from src.openrouter import add_usage
+    spent = {}
+    add_usage(spent, {"prompt_tokens": 1000000, "completion_tokens": 0, "cost": 0.5})
+    add_usage(spent, {"prompt_tokens": 1000000, "completion_tokens": 0})
+    assert usage_cost(spent, {"input": 2.0, "output": 0}) == 2.5

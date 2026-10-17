@@ -161,6 +161,9 @@ def add_usage(total, usage):
     cost = (usage or {}).get("cost")
     if isinstance(cost, (int, float)):
         total["cost"] = round(total.get("cost", 0.0) + float(cost), 6)
+    elif usage:
+        for key in ("prompt_tokens", "completion_tokens"):
+            total["uncosted_" + key] = total.get("uncosted_" + key, 0) + int(usage.get(key, 0) or 0)
     latency = float((usage or {}).get("latency_sec", 0) or 0)
     total["latency_sec"] = round(latency, 2)  # the latest attempt, i.e. the successful one
     total["latency_total_sec"] = round(total.get("latency_total_sec", 0.0) + latency, 2)

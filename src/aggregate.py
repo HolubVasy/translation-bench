@@ -192,13 +192,18 @@ def latency_means(translations):
     return {code: mean(values) for code, values in by_code.items()}
 
 
+def _token_estimate(prompt_tokens, completion_tokens, price):
+    return prompt_tokens / 1e6 * price.get("input", 0) + completion_tokens / 1e6 * price.get("output", 0)
+
+
 def usage_cost(usage, price):
-    """Exact USD cost reported by OpenRouter when present, else a token estimate."""
+    """Exact USD cost reported by OpenRouter, plus a token estimate for any
+    attempt that reported no cost; a record with no cost at all is estimated."""
     usage = usage or {}
-    if isinstance(usage.get("cost"), (int, float)):
-        return float(usage["cost"])
-    return (usage.get("prompt_tokens", 0) / 1e6 * price.get("input", 0)
-            + usage.get("completion_tokens", 0) / 1e6 * price.get("output", 0))
+    if not isinstance(usage.get("cost"), (int, float)):
+        return _token_estimate(usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), price)
+    return float(usage["cost"]) + _token_estimate(
+        usage.get("uncosted_prompt_tokens", 0), usage.get("uncosted_completion_tokens", 0), price)
 
 
 def translator_costs(cfg, translations, failed):
