@@ -15,6 +15,17 @@ issues; this file is the readable map, issues are the tasks.
 Priority: P1 next, P2 soon, P3 later. Principle: Python = deterministic
 code; LLM = model or external translator call, costs money.
 
+## Newcomer check: Gemini 3.8 Flash (#50), first task
+
+| # | Step | Principle | API USD | Status | How it is tested |
+|---|---|---|---|---|---|
+| 98 | Deterministic checks and gates | Python | 0 | done | gates passed on a1..a3 |
+| 91 | Number check audit | Python | 0 | next | regression set #108 |
+| 99 | Qualification mode in the judge | Python | 0 | ready | unit test: old judgments untouched |
+| 100 | Judge M6 with Argon and Opus | LLM | ~0.65 | ready | decoy calibration, cap 1 USD |
+| 101 | Tier and price of M6 | Python | 0 | ready | unit test of thresholds |
+| 102 | M6 against the tier holder | Python | 0 | ready | checked against #101 |
+
 ## Plan
 
 | # | What | Goal | Prio | Principle | API USD | How it is tested |
