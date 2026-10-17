@@ -22,6 +22,13 @@ from pathlib import Path
 from docx import Document
 from docx.shared import Inches
 
+XML_INVALID_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def xml_safe(text):
+    """Drop control characters that Word XML cannot store."""
+    return XML_INVALID_RE.sub("", text)
+
 SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
 JUDG_DIR = Path("data/judgments")
@@ -91,7 +98,7 @@ def assemble(article, code):
     img_dir = SRC_DIR / "images" / article
     doc = Document()
     for seg in translation["segments"]:
-        kind, text = seg["type"], seg["text"]
+        kind, text = seg["type"], xml_safe(seg["text"])
         if kind == "image":
             match = re.search(r"\[IMAGE_(\d+)\]", text)
             img = img_dir / ("IMAGE_%s.png" % match.group(1)) if match else None
