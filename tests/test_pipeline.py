@@ -216,6 +216,8 @@ def test_validate_translation_never_raises():
     assert validate_translation(source, {"segments": None}) == ["segments is not a list"]
     assert validate_translation(source, None) == ["segments is not a list"]
     assert validate_translation(source, {"segments": ["x"]}) == ["S1-p1: segment is not an object"]
+    numeric = {"segments": [{"id": "S1-p1", "type": "p", "text": 2024}]}
+    assert validate_translation(source, numeric) == ["S1-p1: text is not a string"]
 
 
 def test_gated_translation_gets_zero_on_an_article_nobody_judged():

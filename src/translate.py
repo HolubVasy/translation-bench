@@ -45,7 +45,10 @@ def validate_translation(source, result):
             errors.append("%s: type changed" % src["id"])
         if src["type"] == "image" and out.get("text") != src["text"]:
             errors.append("%s: image placeholder changed" % src["id"])
-        if not str(out.get("text", "")).strip():
+        text = out.get("text")
+        if not isinstance(text, str):
+            errors.append("%s: text is not a string" % src["id"])
+        elif not text.strip():
             errors.append("%s: empty text" % src["id"])
     return errors
 
