@@ -47,7 +47,8 @@ def load_inputs():
         "checks": load_json_files(CHECK_DIR, "mech__*.json"),
         "translations": load_json_files(TR_DIR, "tr__*.json"),
         "failed_translations": load_json_files(TR_DIR, "fail__*.json"),
-        "failed_judge_calls": load_json_files(JUDG_DIR, "fail__*.json") + load_json_files(CAL_DIR, "fail__*.json"),
+        "failed_judge_calls": (load_json_files(JUDG_DIR, "fail__*.json") + load_json_files(CAL_DIR, "fail__*.json")
+                               + load_json_files(JUDG_DIR, "stale__*.json")),  # retired judgments: spend only
         "sources": load_json_files(SRC_DIR, "a*.json"),
         "spend_log": [json.loads(r) for r in SPEND_LOG.read_text(encoding="utf-8").splitlines() if r.strip()]
         if SPEND_LOG.exists() else [],
