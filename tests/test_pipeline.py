@@ -247,3 +247,12 @@ def test_existing_judgment_is_reused_only_for_the_same_admitted_set(tmp_path):
     path.write_text(json.dumps({"presentation_order": ["M2", "M1"]}))
     assert judged_same_set(path, {"M1": "", "M2": ""})
     assert not judged_same_set(path, {"M1": "", "M2": "", "M3": ""})
+
+
+def test_actual_spend_spans_the_run_and_usage_cost_prefers_exact_cost():
+    from src.aggregate import actual_spend, usage_cost
+    log = [{"before": 10.0, "after": 10.0}, {"before": 10.3, "after": 10.6}, {"before": 10.9, "after": 11.0}]
+    assert round(actual_spend(log), 4) == 1.0
+    assert actual_spend([]) is None
+    assert usage_cost({"prompt_tokens": 1000000, "cost": 0.25}, {"input": 10}) == 0.25
+    assert usage_cost({"prompt_tokens": 1000000}, {"input": 10}) == 10.0

@@ -49,3 +49,10 @@ def test_add_usage_sums_tokens_and_latency():
 def test_extract_json_survives_backticks_inside_a_string():
     reply = '{"segments": [{"id": "S1-p1", "text": "use ```code``` here"}]}'
     assert extract_json(reply)["segments"][0]["text"] == "use ```code``` here"
+
+
+def test_add_usage_sums_exact_cost_when_reported():
+    spent = {}
+    add_usage(spent, {"prompt_tokens": 1, "cost": 0.1})
+    add_usage(spent, {"prompt_tokens": 1, "cost": 0.05})
+    assert spent["cost"] == 0.15

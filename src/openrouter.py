@@ -48,6 +48,7 @@ def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=
     body = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
+        "usage": {"include": True},  # OpenRouter returns usage.cost in USD per call
     }
     if temperature is not None:
         body["temperature"] = temperature
@@ -157,6 +158,9 @@ def add_usage(total, usage):
     attempt (the successful one when called last), latency_total_sec the sum."""
     for key in ("prompt_tokens", "completion_tokens"):
         total[key] = total.get(key, 0) + int((usage or {}).get(key, 0) or 0)
+    cost = (usage or {}).get("cost")
+    if isinstance(cost, (int, float)):
+        total["cost"] = round(total.get("cost", 0.0) + float(cost), 6)
     latency = float((usage or {}).get("latency_sec", 0) or 0)
     total["latency_sec"] = round(latency, 2)  # the latest attempt, i.e. the successful one
     total["latency_total_sec"] = round(total.get("latency_total_sec", 0.0) + latency, 2)
