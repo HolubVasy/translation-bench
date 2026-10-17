@@ -35,6 +35,12 @@ ENGLISH_FUNCTION_WORDS = frozenset(
     "the and of with which were that from this these was are is for by onto into "
     "their been have has than then there where while when".split())
 WORD_RE = re.compile(r"[A-Za-z]+")
+# Unit exponents are written as superscripts in one language and as plain
+# digits in the other (m2 vs m\u00b2, min-1 vs min\u207b\u00b9); both mean the same.
+SCRIPT_DIGITS = str.maketrans(
+    "\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079\u207b"
+    "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089",
+    "0123456789-0123456789")
 
 
 def count_cyrillic(text):
@@ -108,8 +114,13 @@ def _diff_tokens(kind, src_text, out_text, pattern, normalizer=None):
     return {"kind": kind, "missing": sorted(missing.elements()), "extra": sorted(extra.elements())}
 
 
+DIMENSION_RE = re.compile(r"\b[23]D\b")  # 2D, 3D are routinely written out as words
+
+
 def check_numbers(src_seg, out_seg, glossary):
-    return _diff_tokens("numbers", src_seg["text"], out_seg["text"], NUM_RE, _normalize_number)
+    src_text = DIMENSION_RE.sub("", src_seg["text"].translate(SCRIPT_DIGITS))
+    out_text = DIMENSION_RE.sub("", out_seg["text"].translate(SCRIPT_DIGITS))
+    return _diff_tokens("numbers", src_text, out_text, NUM_RE, _normalize_number)
 
 
 def check_urls(src_seg, out_seg, glossary):
@@ -169,6 +180,28 @@ SEGMENT_CHECKS = {
 }
 
 
+def cancel_shifted_numbers(issues, segment_order):
+    """A number missing in one segment and extra in the neighbouring one was
+    moved across a segment border, not lost; both sides cancel out."""
+    by_segment = {i["segment"]: i for i in issues if i["kind"] == "numbers"}
+    position = {seg_id: n for n, seg_id in enumerate(segment_order)}
+    for seg_id, issue in by_segment.items():
+        for step in (-1, 1):
+            n = position.get(seg_id, -10) + step
+            neighbour = by_segment.get(segment_order[n]) if 0 <= n < len(segment_order) else None
+            if neighbour is not None:
+                _cancel_pair(issue, neighbour)
+    return [i for i in issues if i["kind"] != "numbers" or i["missing"] or i["extra"]]
+
+
+def _cancel_pair(issue, neighbour):
+    common = Counter(issue["missing"]) & Counter(neighbour["extra"])
+    if not common:
+        return
+    issue["missing"] = sorted((Counter(issue["missing"]) - common).elements())
+    neighbour["extra"] = sorted((Counter(neighbour["extra"]) - common).elements())
+
+
 def check_segments(source, translation, glossary):
     """All segment-level issues of one translation, each tagged with its segment."""
     issues = []
@@ -183,7 +216,7 @@ def check_segments(source, translation, glossary):
             if issue:
                 issue["segment"] = src_seg["id"]
                 issues.append(issue)
-    return issues
+    return cancel_shifted_numbers(issues, [seg["id"] for seg in source["segments"]])
 
 
 # ------------------------------------------------------------ gates
