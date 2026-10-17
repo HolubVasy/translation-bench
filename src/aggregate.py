@@ -192,10 +192,18 @@ def latency_means(translations):
     return {code: mean(values) for code, values in by_code.items()}
 
 
+def _token_estimate(prompt_tokens, completion_tokens, price):
+    return prompt_tokens / 1e6 * price.get("input", 0) + completion_tokens / 1e6 * price.get("output", 0)
+
+
 def usage_cost(usage, price):
+    """Exact USD cost reported by OpenRouter, plus a token estimate for any
+    attempt that reported no cost; a record with no cost at all is estimated."""
     usage = usage or {}
-    return (usage.get("prompt_tokens", 0) / 1e6 * price.get("input", 0)
-            + usage.get("completion_tokens", 0) / 1e6 * price.get("output", 0))
+    if not isinstance(usage.get("cost"), (int, float)):
+        return _token_estimate(usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), price)
+    return float(usage["cost"]) + _token_estimate(
+        usage.get("uncosted_prompt_tokens", 0), usage.get("uncosted_completion_tokens", 0), price)
 
 
 def translator_costs(cfg, translations, failed):
@@ -216,7 +224,12 @@ def judge_costs(cfg, judgments, calibration, failed_calls):
 
 
 def actual_spend(spend_log):
-    return sum(r["after"] - r["before"] for r in spend_log)
+    """Key usage from the first reading before any stage to the last reading
+    after any stage. OpenRouter updates key usage with a lag, so summing
+    per-stage deltas misses spend that lands between stages; the span does not."""
+    if not spend_log:
+        return None
+    return max(r["after"] for r in spend_log) - min(r["before"] for r in spend_log)
 
 
 def source_words(sources):
@@ -315,12 +328,13 @@ def _self_scoring_line(judge, own_code, totals, excluded):
 def section_spend(cfg, tr_cost, judge_cost, actual, missing):
     rows = [(code, cfg["translators"][code], "%.4f" % tr_cost.get(code, 0.0)) for code in cfg["translators"]]
     rows += [(judge, cfg["judges"].get(judge, "?"), "%.4f" % judge_cost[judge]) for judge in sorted(judge_cost)]
-    rows.append(("total (estimate from tokens)", "", "%.4f" % (sum(tr_cost.values()) + sum(judge_cost.values()))))
+    rows.append(("total (OpenRouter per-call cost, token estimate where missing)", "",
+                 "%.4f" % (sum(tr_cost.values()) + sum(judge_cost.values()))))
     lines = ["", "## Spend USD", ""] + table(["who", "model", "cost"], rows)
     if actual is not None:
-        lines += ["", "Actual spend by OpenRouter key usage: %.4f USD. It includes any other use of"
-                  " the same key during the run and may lag by a few seconds; the per-model rows"
-                  " above are token estimates." % actual]
+        lines += ["", "Key usage over the run span: %.4f USD. Cross-check only: it includes any other"
+                  " use of the same key and OpenRouter books usage with a lag, so the last stage"
+                  " may be missing." % actual]
     if missing:
         lines += ["", "Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing)]
     return lines
@@ -348,7 +362,7 @@ def build_report(cfg, data):
     order = sorted(codes, key=lambda c: -borda[c])
     tr_cost = translator_costs(cfg, data["translations"], data["failed_translations"])
     j_cost = judge_costs(cfg, data["judgments"], data["calibration"], data["failed_judge_calls"])
-    actual = actual_spend(data["spend_log"]) if data["spend_log"] else None
+    actual = actual_spend(data["spend_log"])
     lines = ["# Translation benchmark summary", "",
              "Judgments: %d (%d counted). Source size: %d words."
              % (len(data["judgments"]), len(counted), source_words(data["sources"]))]

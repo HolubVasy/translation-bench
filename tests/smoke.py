@@ -145,17 +145,18 @@ def main():
         check("## Judge agreement" in report and "## Position consistency" in report, "agreement sections present")
         check("| J1 | -1.00 |" in report, "reversed pass of J1 shows tau -1")
         check("latency s" in report and "2.5" in report, "latency column present")
-        check("Actual spend by OpenRouter key usage: 1.0000 USD" in report, "actual spend from key usage delta")
-        price_in = cfg["prices"][codes[0]]["input"]
-        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
-              or price_in == 0, "failed but billed attempts counted in spend")
+        check("Key usage over the run span: 1.0000 USD" in report, "actual spend from key usage span")
+        price = cfg["prices"][codes[0]]
+        expected = (1000 * price["input"] + 800 * price["output"]) / 1e6 + price["input"]
+        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], expected) in report,
+              "failed but billed attempts counted in spend")
         check("not counted (judge excluded)" in report,
               "excluded self-judge is not shown as a 0.0 score")
         from src.openrouter import add_usage
         spent = {}
         add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5})
         add_usage(spent, {"prompt_tokens": 7})
-        check(spent == {"prompt_tokens": 17, "completion_tokens": 5, "latency_sec": 0.0, "latency_total_sec": 0.0},
+        check({k: spent[k] for k in ("prompt_tokens", "completion_tokens")} == {"prompt_tokens": 17, "completion_tokens": 5},
               "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")

@@ -20,6 +20,7 @@ import yaml
 
 SRC_DIR = Path("data/source")
 MANIFEST = Path("data/report/manifest.json")
+SPEND_LOG = Path("data/report/spend_log.jsonl")
 SKILLS = {
     "translator": {"source_lang", "target_lang", "article_json", "glossary"},
     "judge": {"source_lang", "target_lang", "n_tr", "labels", "article_id",
@@ -168,6 +169,7 @@ def write_manifest(cfg, rows, total, chars):
     }
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    SPEND_LOG.unlink(missing_ok=True)  # a run starts here; the key span covers this run only
     return run_id
 
 

@@ -8,3 +8,4 @@ data/report/
 .venv/
 data/calibration/
 data/source/images/
+data/source/*.json

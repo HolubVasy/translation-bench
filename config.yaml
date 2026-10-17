@@ -15,14 +15,14 @@ judges:
 
 # USD per 1M tokens, input/output. Used only for the cost column in the report.
 prices:
-  M1: {input: 0.30, output: 1.20}
+  M1: {input: 1.50, output: 9.00}
   M2: {input: 2.00, output: 10.00}
-  M3: {input: 1.00, output: 5.00}
-  M4: {input: 3.00, output: 15.00}
+  M3: {input: 0.10, output: 0.50}
+  M4: {input: 2.00, output: 10.00}
   M5: {input: 0.10, output: 0.50}
 
 judge_prices:
-  J1: {input: 15.00, output: 75.00}   # verify current Opus 5.5 price
+  J1: {input: 4.00, output: 20.00}
   J2: {input: 10.00, output: 50.00}
   J3: {input: 2.00, output: 10.00}
 
