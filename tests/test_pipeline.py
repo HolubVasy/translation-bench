@@ -284,3 +284,8 @@ def test_converter_filters_and_stop_heading():
     assert is_stop_heading("* References:", {"references"})
     assert not is_stop_heading("References were checked by hand", {"references"})
     assert _real_words("Lys Area x 100") == ["Lys", "Area"]
+
+
+def test_assemble_strips_xml_invalid_control_characters():
+    from src.assemble import xml_safe
+    assert xml_safe("a\x00b\x07c\x0bd\ne\tf") == "abcd\ne\tf"
