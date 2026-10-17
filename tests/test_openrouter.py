@@ -43,7 +43,8 @@ def test_add_usage_sums_tokens_and_latency():
     add_usage(spent, {"prompt_tokens": 7, "latency_sec": 0.25})
     add_usage(spent, None)
     assert spent == {"prompt_tokens": 17, "completion_tokens": 5,
-                     "latency_sec": 0.0, "latency_total_sec": 1.75}
+                     "latency_sec": 0.0, "latency_total_sec": 1.75,
+                     "uncosted_prompt_tokens": 17, "uncosted_completion_tokens": 5}
 
 
 def test_extract_json_survives_backticks_inside_a_string():
