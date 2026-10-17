@@ -26,7 +26,7 @@ SRC_DIR = Path("data/source")
 TR_DIR = Path("data/translations")
 OUT_DIR = Path("data/checks")
 
-NUM_RE = re.compile(r"\d+(?:[.,]\d+)*")
+NUM_RE = re.compile(r"\d+(?:[ \u00a0.,]\d+)*")
 URL_RE = re.compile(r"https?://[^\s\)\]\>\"']+")
 PLACEHOLDER_RE = re.compile(r"\[IMAGE_\d+\]")
 LIST_MARKER_RE = re.compile(r"^(?:[-*]|\d+[.)])\s")
@@ -52,7 +52,7 @@ def load_sources():
 
 def load_translations():
     out = {}
-    for path in sorted(TR_DIR.glob("tr__a*__M*.json")):
+    for path in sorted(TR_DIR.glob("tr__*.json")):
         _, article, code = path.stem.split("__")
         out[(article, code)] = json.loads(path.read_text(encoding="utf-8"))
     return out
@@ -62,7 +62,9 @@ def load_translations():
 
 
 def _normalize_number(num):
-    return num.replace(",", ".")
+    """Digits only: 1 000 000, 1,000,000 and 1.000.000 are the same number,
+    and 1,5 equals 1.5. Separator style is a locale choice, not an error."""
+    return re.sub(r"[ \u00a0.,]", "", num)
 
 
 def _tokens(text, pattern, normalizer=None):

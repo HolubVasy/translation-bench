@@ -18,6 +18,8 @@ GLOSSARY = [{"source": "customs declaration", "target": ["customs declaration"]}
 
 def test_numbers_catch_changed_and_normalize_locale():
     assert check_numbers(seg("s", "price 1,5 and 25%"), seg("s", "price 1.5 and 25%"), []) is None
+    assert check_numbers(seg("s", "about 1 000 000 items"), seg("s", "about 1,000,000 items"), []) is None
+    assert check_numbers(seg("s", "about 1\u00a0000 items"), seg("s", "about 1,000 items"), []) is None
     issue = check_numbers(seg("s", "price 25%"), seg("s", "price 52%"), [])
     assert issue["missing"] == ["25"] and issue["extra"] == ["52"]
 
