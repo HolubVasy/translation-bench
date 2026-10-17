@@ -265,3 +265,22 @@ def test_usage_cost_adds_an_estimate_for_attempts_without_cost():
     add_usage(spent, {"prompt_tokens": 1000000, "completion_tokens": 0, "cost": 0.5})
     add_usage(spent, {"prompt_tokens": 1000000, "completion_tokens": 0})
     assert usage_cost(spent, {"input": 2.0, "output": 0}) == 2.5
+
+
+def test_converter_filters_and_stop_heading():
+    from collections import Counter
+    from src.convert import _real_words, is_layout_debris, is_page_furniture, is_stop_heading
+    ctx = {"is_heading": lambda b: False, "n_pages": 10, "repeat_min": 3,
+           "repeats": Counter({"cellulose (#) #:#-#": 9})}
+    debris = {"text": "j j t t", "margin": False}
+    formula = {"text": "= + x B (1) 0.55 1.18", "margin": False}
+    prose = {"text": "The membranes were swelled in a mobile phase.", "margin": False}
+    assert is_layout_debris(debris, ctx) and is_layout_debris(formula, ctx)
+    assert not is_layout_debris(prose, ctx)
+    assert is_page_furniture({"text": "Cellulose (2025) 32:2937-2954", "margin": True}, ctx)
+    assert is_page_furniture({"text": "12", "margin": True}, ctx)
+    assert not is_page_furniture(prose, ctx)
+    assert is_stop_heading("REFERENCES", {"references"})
+    assert is_stop_heading("* References:", {"references"})
+    assert not is_stop_heading("References were checked by hand", {"references"})
+    assert _real_words("Lys Area x 100") == ["Lys", "Area"]

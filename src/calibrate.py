@@ -33,14 +33,41 @@ OUT_DIR = Path("data/calibration")
 NUM_RE = re.compile(r"\d+")
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
-NEGATION_SWAPS = [(" is not ", " is "), (" are not ", " are "), (" does not ", " does "),
-                  (" do not ", " do "), (" cannot ", " can "), (" not ", " "),
-                  (" is ", " is not "), (" are ", " are not "), (" can ", " cannot "),
-                  (" will ", " will not "), (" has ", " has not ")]
-MODALITY_SWAPS = [(" may ", " must "), (" might ", " will "), (" should ", " must "),
-                  (" could ", " did "), (" must ", " may "), (" can ", " must ")]
-QUANTIFIER_SWAPS = [(" only ", " "), (" all ", " some "), (" always ", " sometimes "),
-                    (" never ", " rarely "), (" every ", " some "), (" most ", " few ")]
+# Word swaps per target language; Russian words are \u escapes (ASCII-only code).
+SWAPS = {
+    "English": {
+        "negation": [(" is not ", " is "), (" are not ", " are "), (" does not ", " does "),
+                     (" do not ", " do "), (" cannot ", " can "), (" not ", " "),
+                     (" is ", " is not "), (" are ", " are not "), (" can ", " cannot "),
+                     (" will ", " will not "), (" has ", " has not ")],
+        "modality": [(" may ", " must "), (" might ", " will "), (" should ", " must "),
+                     (" could ", " did "), (" must ", " may "), (" can ", " must ")],
+        "quantifier": [(" only ", " "), (" all ", " some "), (" always ", " sometimes "),
+                       (" never ", " rarely "), (" every ", " some "), (" most ", " few ")],
+    },
+    "Russian": {
+        # ne -> (drop); yavlyaetsya/byl/byli -> ne ...
+        "negation": [(" \u043d\u0435 ", " "),
+                     (" \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f ",
+                      " \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f "),
+                     (" \u0431\u044b\u043b\u0438 ", " \u043d\u0435 \u0431\u044b\u043b\u0438 "),
+                     (" \u0431\u044b\u043b ", " \u043d\u0435 \u0431\u044b\u043b ")],
+        # mozhet -> dolzhen, mogut -> dolzhny, sleduet -> obyazatelno nuzhno
+        "modality": [(" \u043c\u043e\u0436\u0435\u0442 ", " \u0434\u043e\u043b\u0436\u0435\u043d "),
+                     (" \u043c\u043e\u0433\u0443\u0442 ", " \u0434\u043e\u043b\u0436\u043d\u044b "),
+                     (" \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e ",
+                      " \u043d\u0435\u0441\u043e\u043c\u043d\u0435\u043d\u043d\u043e ")],
+        # tolko -> (drop), vse -> nekotorye, vsegda -> inogda
+        "quantifier": [(" \u0442\u043e\u043b\u044c\u043a\u043e ", " "),
+                       (" \u0432\u0441\u0435 ", " \u043d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 "),
+                       (" \u0432\u0441\u0435\u0433\u0434\u0430 ", " \u0438\u043d\u043e\u0433\u0434\u0430 ")],
+    },
+}
+LANGUAGE = {"target": "English"}  # set from config.target_lang in main()
+
+
+def _swaps(kind):
+    return SWAPS.get(LANGUAGE["target"], SWAPS["English"])[kind]
 
 
 # ------------------------------------------------------------ loaders
@@ -73,15 +100,15 @@ def _swap_first(seg, swaps, kind):
 
 
 def plant_negation(seg):
-    return _swap_first(seg, NEGATION_SWAPS, "negation")
+    return _swap_first(seg, _swaps("negation"), "negation")
 
 
 def plant_modality(seg):
-    return _swap_first(seg, MODALITY_SWAPS, "modality")
+    return _swap_first(seg, _swaps("modality"), "modality")
 
 
 def plant_quantifier(seg):
-    return _swap_first(seg, QUANTIFIER_SWAPS, "quantifier")
+    return _swap_first(seg, _swaps("quantifier"), "quantifier")
 
 
 def plant_number(seg):
@@ -221,6 +248,7 @@ def judge_decoy(cfg, article, judge_code, model, source_str, label, decoy_str, g
 
 def main():
     cfg = load_cfg()
+    LANGUAGE["target"] = cfg.get("target_lang", "English")
     cal = calibration_settings(cfg)
     if not cal.get("enabled", True):
         print("calibration disabled in config.yaml")
