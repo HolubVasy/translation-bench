@@ -229,6 +229,18 @@ def test_gated_translation_gets_zero_on_an_article_nobody_judged():
     assert criterion_means(judged, CODES, disqualified)["M3"]["meaning"] == 0
 
 
+def test_gated_zero_weight_is_one_per_round_whatever_survived():
+    from src.aggregate import gated_slots, per_judge_totals
+    j1, j2 = judgment("J1", ["M1", "M2"]), judgment("J2", ["M1", "M2"])
+    j1["article"] = j2["article"] = "a1"
+    judged = [j1, j2]
+    disqualified = {("a1", "M3"): ["x"], ("a2", "M3"): ["x"]}
+    slots = gated_slots(judged, CODES, disqualified)
+    assert sorted(slots) == [("a1", "M3", "J1"), ("a1", "M3", "J2"), ("a2", "M3", "J1"), ("a2", "M3", "J2")]
+    totals = per_judge_totals(judged, CODES, disqualified)
+    assert totals["J1"]["M3"] == [0, 0] and totals["J1"]["M1"] == [48]
+
+
 def test_existing_judgment_is_reused_only_for_the_same_admitted_set(tmp_path):
     from src.judge import judged_same_set
     path = tmp_path / "ev__a1__by__J1.json"

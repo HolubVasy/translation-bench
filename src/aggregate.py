@@ -71,55 +71,62 @@ def excluded_judges(calibration, judgments):
     return relevant if relevant and relevant != present else set()
 
 
+def gated_slots(judgments, codes, disqualified):
+    """One (article, code, judge) slot per judging round a gated translation
+    would have taken part in. On a judged article that is every judgment of
+    it; on an article nobody judged, every (judge, pass) round seen in the
+    run, so the weight of a gated article never depends on how many
+    translations survived the gates."""
+    judged = {j["article"] for j in judgments}
+    rounds = {(j["judge"], j.get("pass", "forward")) for j in judgments} or {(None, "forward")}
+    slots = []
+    for j in judgments:
+        slots += [(j["article"], c, j["judge"]) for c in codes if (j["article"], c) in disqualified]
+    for article, code in disqualified:
+        if code in codes and article not in judged:
+            slots += [(article, code, judge) for judge, _ in rounds]
+    return slots
+
+
 def criterion_means(judgments, codes, disqualified=()):
-    """Mean per criterion; a translation gated out on an article scores 0
-    on that article in every judgment of it, so gating never helps."""
+    """Mean per criterion; a gated translation scores 0 in every round of
+    that article, and a stale row for it is ignored."""
     scores = defaultdict(lambda: defaultdict(list))
     for judgment in judgments:
         for code in codes:
-            gated = (judgment["article"], code) in disqualified
-            row = None if gated else judgment["scores"].get(code)
+            row = None if (judgment["article"], code) in disqualified else judgment["scores"].get(code)
             if row:
                 for criterion in CRITERIA:
                     scores[code][criterion].append(row[criterion])
-            elif gated:
-                for criterion in CRITERIA:
-                    scores[code][criterion].append(0)
-    for article, code in _unjudged_gated(judgments, codes, disqualified):
+    for _, code, _ in gated_slots(judgments, codes, disqualified):
         for criterion in CRITERIA:
             scores[code][criterion].append(0)
     return {code: {c: mean(scores[code][c]) for c in CRITERIA} for code in codes}
 
 
-def _unjudged_gated(judgments, codes, disqualified):
-    """Gated (article, code) pairs on articles that have no judgment at all."""
-    judged_articles = {j["article"] for j in judgments}
-    return [(a, c) for (a, c) in disqualified if c in codes and a not in judged_articles]
-
-
 def borda_means(judgments, codes, disqualified=()):
-    """Mean Borda points; a translation gated out on an article takes 0
-    points (below last place) in every judgment of that article."""
+    """Mean Borda points; a gated translation takes 0 points (below last
+    place) in every round of that article."""
     points = defaultdict(list)
     for judgment in judgments:
-        gated = [c for c in codes if (judgment["article"], c) in disqualified]
-        ranking = [c for c in judgment["ranking"] if c not in gated]
+        ranking = [c for c in judgment["ranking"] if (judgment["article"], c) not in disqualified]
         for pos, code in enumerate(ranking):
             points[code].append(len(ranking) - pos)
-        for code in gated:
-            points[code].append(0)
-    for _, code in _unjudged_gated(judgments, codes, disqualified):
+    for _, code, _ in gated_slots(judgments, codes, disqualified):
         points[code].append(0)
     return {code: mean(points[code]) for code in codes}
 
 
-def per_judge_totals(judgments, codes):
+def per_judge_totals(judgments, codes, disqualified=()):
     totals = defaultdict(lambda: defaultdict(list))
     for judgment in judgments:
         for code in codes:
-            row = judgment["scores"].get(code)
+            row = None if (judgment["article"], code) in disqualified else judgment["scores"].get(code)
             if row:
                 totals[judgment["judge"]][code].append(row["total"])
+    for _, code, judge in gated_slots(judgments, codes, disqualified):
+        if judge is not None:
+            totals[judge][code].append(0)
     return totals
 
 
@@ -348,9 +355,9 @@ def build_report(cfg, data):
     lines += section_calibration(data["calibration"], excluded)
     lines += section_overall(cfg, order, means, borda, issues, latency_means(data["translations"]), tr_cost)
     lines += section_disqualified(cfg, disqualified)
-    lines += section_per_judge(order, per_judge_totals(counted, codes))
+    lines += section_per_judge(order, per_judge_totals(counted, codes, disqualified))
     lines += section_agreement(judge_agreement(data["judgments"]), position_consistency(data["judgments"]))
-    lines += section_self_scoring(cfg, per_judge_totals(counted, codes), excluded)
+    lines += section_self_scoring(cfg, per_judge_totals(counted, codes, disqualified), excluded)
     lines += section_spend(cfg, tr_cost, j_cost, actual, missing_prices(cfg))
     lines += section_flags(data["judgments"])
     return "\n".join(lines) + "\n"
