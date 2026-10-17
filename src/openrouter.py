@@ -115,6 +115,18 @@ def _balanced_object(text):
     return None
 
 
+def _object_candidates(text):
+    """Outermost {...} span and the first balanced object, when they differ."""
+    candidates = []
+    first, last = text.find("{"), text.rfind("}")
+    if first != -1 and last > first:
+        candidates.append(text[first : last + 1])
+    balanced = _balanced_object(text)
+    if balanced and balanced not in candidates:
+        candidates.append(balanced)
+    return candidates
+
+
 def extract_json(text):
     """Parse a JSON object from a model reply.
 
@@ -124,16 +136,10 @@ def extract_json(text):
     if not isinstance(text, str):
         raise ValueError("reply is not text")
     text = _clean(text)
+    candidates = _object_candidates(text)
     fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
     if fence:
-        text = fence.group(1).strip()
-    candidates = []
-    first, last = text.find("{"), text.rfind("}")
-    if first != -1 and last > first:
-        candidates.append(text[first : last + 1])
-    balanced = _balanced_object(text)
-    if balanced and balanced not in candidates:
-        candidates.append(balanced)
+        candidates += [c for c in _object_candidates(fence.group(1).strip()) if c not in candidates]
     for candidate in candidates:
         for fixed in (candidate, re.sub(r",\s*([}\]])", r"\1", candidate)):
             try:

@@ -86,7 +86,21 @@ def validate_judgment(result, codes):
         return errors + ["scores is not an object"]
     for code in codes:
         errors += _validate_scores(code, scores.get(code))
+    errors += _validate_flags(result)
     return errors
+
+
+def _validate_flags(result):
+    """flags must be a list of objects; a missing list is normalized to []."""
+    flags = result.get("flags")
+    if flags is None:
+        result["flags"] = []
+        return []
+    if not isinstance(flags, list):
+        return ["flags is not a list"]
+    if any(not isinstance(f, dict) for f in flags):
+        return ["flags contains a non-object entry"]
+    return []
 
 
 def _validate_scores(code, row):
@@ -196,8 +210,8 @@ def main():
             print("missing %s" % err)
             failures += 1
             break
-        if len(translations) < 2:
-            print("skip %s: fewer than two admitted translations" % out.name)
+        if not translations:
+            print("skip %s: no admitted translation" % out.name)
             continue
         codes = presentation_order(translations, article, judge_code, pass_name)
         shuffled = [(code, translations[code]) for code in codes]

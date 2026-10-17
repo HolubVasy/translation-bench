@@ -28,11 +28,16 @@ def validate_translation(source, result):
     """Same ids, same order, same types; text non-empty; image placeholders kept."""
     errors = []
     src_segs = source["segments"]
-    out_segs = result.get("segments", [])
+    out_segs = result.get("segments") if isinstance(result, dict) else None
+    if not isinstance(out_segs, list):
+        return ["segments is not a list"]
     if len(src_segs) != len(out_segs):
         errors.append("segment count %d != %d" % (len(out_segs), len(src_segs)))
         return errors
     for src, out in zip(src_segs, out_segs):
+        if not isinstance(out, dict):
+            errors.append("%s: segment is not an object" % src["id"])
+            continue
         if out.get("id") != src["id"]:
             errors.append("id mismatch: %s vs %s" % (out.get("id"), src["id"]))
             continue

@@ -84,7 +84,16 @@ def criterion_means(judgments, codes, disqualified=()):
             elif gated:
                 for criterion in CRITERIA:
                     scores[code][criterion].append(0)
+    for article, code in _unjudged_gated(judgments, codes, disqualified):
+        for criterion in CRITERIA:
+            scores[code][criterion].append(0)
     return {code: {c: mean(scores[code][c]) for c in CRITERIA} for code in codes}
+
+
+def _unjudged_gated(judgments, codes, disqualified):
+    """Gated (article, code) pairs on articles that have no judgment at all."""
+    judged_articles = {j["article"] for j in judgments}
+    return [(a, c) for (a, c) in disqualified if c in codes and a not in judged_articles]
 
 
 def borda_means(judgments, codes, disqualified=()):
@@ -98,6 +107,8 @@ def borda_means(judgments, codes, disqualified=()):
             points[code].append(len(ranking) - pos)
         for code in gated:
             points[code].append(0)
+    for _, code in _unjudged_gated(judgments, codes, disqualified):
+        points[code].append(0)
     return {code: mean(points[code]) for code in codes}
 
 

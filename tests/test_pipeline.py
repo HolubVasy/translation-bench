@@ -195,3 +195,33 @@ def test_make_decoy_defaults_to_every_planter():
             "Traders may file online.", "This applies only once."])]}
     _, planted = make_decoy(translation)
     assert [p["kind"] for p in planted] == list(PLANTERS)
+
+
+def test_validate_judgment_checks_flags_shape():
+    ok = judgment("J1", CODES)
+    ok.pop("flags")
+    assert validate_judgment(ok, CODES) == [] and ok["flags"] == []
+    bad = judgment("J1", CODES)
+    bad["flags"] = None
+    assert validate_judgment(bad, CODES) == [] and bad["flags"] == []
+    bad["flags"] = "none"
+    assert validate_judgment(bad, CODES) == ["flags is not a list"]
+    bad["flags"] = [None]
+    assert validate_judgment(bad, CODES) == ["flags contains a non-object entry"]
+
+
+def test_validate_translation_never_raises():
+    from src.translate import validate_translation
+    source = {"segments": [{"id": "S1-p1", "type": "p", "text": "x"}]}
+    assert validate_translation(source, {"segments": None}) == ["segments is not a list"]
+    assert validate_translation(source, None) == ["segments is not a list"]
+    assert validate_translation(source, {"segments": ["x"]}) == ["S1-p1: segment is not an object"]
+
+
+def test_gated_translation_gets_zero_on_an_article_nobody_judged():
+    judged = [judgment("J1", ["M1", "M2"])]
+    judged[0]["article"] = "a1"
+    disqualified = {("a2", "M3"): ["residue"], ("a1", "M3"): ["residue"]}
+    borda = borda_means(judged, CODES, disqualified)
+    assert borda["M3"] == 0.0
+    assert criterion_means(judged, CODES, disqualified)["M3"]["meaning"] == 0
