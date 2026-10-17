@@ -207,9 +207,9 @@ def main():
         try:
             translations = admitted_translations(cfg, article)
         except FileNotFoundError as err:
-            print("missing %s" % err)
+            print("skip %s: missing %s" % (out.name, err))
             failures += 1
-            break
+            continue
         if not translations:
             print("skip %s: no admitted translation" % out.name)
             continue

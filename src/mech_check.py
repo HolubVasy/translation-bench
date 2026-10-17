@@ -62,9 +62,13 @@ def load_translations():
 
 
 def _normalize_number(num):
-    """Digits only: 1 000 000, 1,000,000 and 1.000.000 are the same number,
-    and 1,5 equals 1.5. Separator style is a locale choice, not an error."""
-    return re.sub(r"[ \u00a0.,]", "", num)
+    """Canonical form: thousands separators (a space, or a comma or point
+    followed by exactly three digits) are dropped, a decimal comma becomes a
+    point. 1 000 000, 1,000,000 and 1.000.000 agree; 1,5 equals 1.5 and
+    differs from 15."""
+    num = re.sub(r"[ \u00a0]", "", num)
+    num = re.sub(r"[.,](?=\d{3}(?:\D|$))", "", num)
+    return num.replace(",", ".")
 
 
 def _tokens(text, pattern, normalizer=None):

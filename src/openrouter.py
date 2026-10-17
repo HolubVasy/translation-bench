@@ -69,9 +69,9 @@ def chat(model, prompt, temperature=0.0, timeout=300, max_retries=3, max_tokens=
             content = data["choices"][0]["message"]["content"]
             usage = dict(data.get("usage") or {})
             usage["latency_sec"] = round(time.monotonic() - started, 2)
-            if not isinstance(content, str) or not content.strip():
-                raise OpenRouterError("%s returned an empty reply" % model)
-            return content, usage
+            if not isinstance(content, str):
+                content = "" if content is None else json.dumps(content)
+            return content, usage  # an empty reply fails validation later, usage kept
         except Exception as err:  # noqa: BLE001
             last_err = err
             if attempt < max_retries:
