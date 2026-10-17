@@ -1,8 +1,10 @@
 """Aggregate judgments into data/report/summary.md.
 
-Deterministic arithmetic only: average scores per criterion, Borda points
-from rankings, mechanical check issue counts, cost per 1K source words,
-and a separate view of the judge that is also a participant (self-scoring).
+Deterministic arithmetic only: criterion averages, Borda points from
+rankings, judge agreement (Kendall tau between judges and between the two
+passes of one judge), mechanical issues and gate results, latency, spend
+(token estimate per model plus the OpenRouter key usage delta), and the
+self-scoring check for a judge that is also a participant.
 
 Usage: python -m src.aggregate
 """
@@ -10,6 +12,7 @@ Usage: python -m src.aggregate
 import json
 import sys
 from collections import defaultdict
+from itertools import combinations
 from pathlib import Path
 
 import yaml
@@ -19,13 +22,40 @@ TR_DIR = Path("data/translations")
 CHECK_DIR = Path("data/checks")
 JUDG_DIR = Path("data/judgments")
 CAL_DIR = Path("data/calibration")
-OUT = Path("data/report/summary.md")
+REPORT_DIR = Path("data/report")
+OUT = REPORT_DIR / "summary.md"
+SPEND_LOG = REPORT_DIR / "spend_log.jsonl"
 
 CRITERIA = ("meaning", "completeness", "data", "naturalness", "flow", "clean")
 
 
+# ------------------------------------------------------------ loaders
+
+
 def load_cfg():
     return yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
+
+
+def load_json_files(folder, pattern):
+    return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob(pattern))]
+
+
+def load_inputs():
+    return {
+        "judgments": load_json_files(JUDG_DIR, "ev__*.json"),
+        "calibration": load_json_files(CAL_DIR, "cal__by__*.json"),
+        "checks": load_json_files(CHECK_DIR, "mech__*.json"),
+        "translations": load_json_files(TR_DIR, "tr__*.json"),
+        "failed_translations": load_json_files(TR_DIR, "fail__*.json"),
+        "failed_judge_calls": (load_json_files(JUDG_DIR, "fail__*.json") + load_json_files(CAL_DIR, "fail__*.json")
+                               + load_json_files(JUDG_DIR, "stale__*.json")),  # retired judgments: spend only
+        "sources": load_json_files(SRC_DIR, "a*.json"),
+        "spend_log": [json.loads(r) for r in SPEND_LOG.read_text(encoding="utf-8").splitlines() if r.strip()]
+        if SPEND_LOG.exists() else [],
+    }
+
+
+# ------------------------------------------------------------ logic
 
 
 def mean(values):
@@ -33,226 +63,318 @@ def mean(values):
     return sum(values) / len(values) if values else 0.0
 
 
-def main():
-    cfg = load_cfg()
-    codes = list(cfg["translators"])
-    judgments = [
-        json.loads(p.read_text(encoding="utf-8")) for p in sorted(JUDG_DIR.glob("ev__*.json"))
-    ]
-    if not judgments:
-        print("no judgments; run src.judge first")
-        return 1
-
-    calibration = [
-        json.loads(p.read_text(encoding="utf-8")) for p in sorted(CAL_DIR.glob("cal__by__*.json"))
-    ]
+def excluded_judges(calibration, judgments):
+    """Judges that failed calibration, unless that would leave none."""
     failed = {c["judge"] for c in calibration if not c.get("passed", True)}
-    all_judges = {j["judge"] for j in judgments}
-    # Exclude failed judges, unless that would leave no judge at all.
-    relevant = failed & all_judges
-    excluded = relevant if relevant and relevant != all_judges else set()
-    all_judgments = judgments
-    judgments = [j for j in judgments if j["judge"] not in excluded]
+    present = {j["judge"] for j in judgments}
+    relevant = failed & present
+    return relevant if relevant and relevant != present else set()
 
-    # Which judge model is also a participant (same OpenRouter id).
-    participant_models = {model: code for code, model in cfg["translators"].items()}
-    self_judges = {
-        j_code: participant_models[model]
-        for j_code, model in cfg["judges"].items()
-        if model in participant_models
-    }
 
-    scores = defaultdict(lambda: defaultdict(list))  # code -> criterion -> values
-    borda = defaultdict(list)  # code -> points per round
-    per_judge_total = defaultdict(lambda: defaultdict(list))  # judge -> code -> totals
-    flags = []
-    n = len(codes)
+def gated_slots(judgments, codes, disqualified):
+    """One (article, code, judge) slot per judging round a gated translation
+    would have taken part in. On a judged article that is every judgment of
+    it; on an article nobody judged, every (judge, pass) round seen in the
+    run, so the weight of a gated article never depends on how many
+    translations survived the gates."""
+    judged = {j["article"] for j in judgments}
+    rounds = {(j["judge"], j.get("pass", "forward")) for j in judgments} or {(None, "forward")}
+    slots = []
+    for j in judgments:
+        slots += [(j["article"], c, j["judge"]) for c in codes if (j["article"], c) in disqualified]
+    for article, code in disqualified:
+        if code in codes and article not in judged:
+            slots += [(article, code, judge) for judge, _ in rounds]
+    return slots
 
+
+def criterion_means(judgments, codes, disqualified=()):
+    """Mean per criterion; a gated translation scores 0 in every round of
+    that article, and a stale row for it is ignored."""
+    scores = defaultdict(lambda: defaultdict(list))
     for judgment in judgments:
-        judge = judgment["judge"]
         for code in codes:
-            row = judgment["scores"][code]
-            for criterion in CRITERIA:
-                scores[code][criterion].append(row[criterion])
-            per_judge_total[judge][code].append(row["total"])
-        for pos, code in enumerate(judgment["ranking"]):
-            borda[code].append(n - pos)
-        for flag in judgment.get("flags", []):
-            flag["judge"] = judge
-            flags.append(flag)
+            row = None if (judgment["article"], code) in disqualified else judgment["scores"].get(code)
+            if row:
+                for criterion in CRITERIA:
+                    scores[code][criterion].append(row[criterion])
+    for _, code, _ in gated_slots(judgments, codes, disqualified):
+        for criterion in CRITERIA:
+            scores[code][criterion].append(0)
+    return {code: {c: mean(scores[code][c]) for c in CRITERIA} for code in codes}
 
-    mech_issues = defaultdict(int)
-    for check_path in CHECK_DIR.glob("mech__*.json"):
-        data = json.loads(check_path.read_text(encoding="utf-8"))
-        mech_issues[data["translator"]] += len(data["issues"])
 
-    # Source size for the cost estimate.
-    total_words = 0
-    for src_path in SRC_DIR.glob("a*.json"):
-        data = json.loads(src_path.read_text(encoding="utf-8"))
-        total_words += sum(len(seg["text"].split()) for seg in data["segments"])
+def borda_means(judgments, codes, disqualified=()):
+    """Mean Borda points; a gated translation takes 0 points (below last
+    place) in every round of that article."""
+    points = defaultdict(list)
+    for judgment in judgments:
+        ranking = [c for c in judgment["ranking"] if (judgment["article"], c) not in disqualified]
+        for pos, code in enumerate(ranking):
+            points[code].append(len(ranking) - pos)
+    for _, code, _ in gated_slots(judgments, codes, disqualified):
+        points[code].append(0)
+    return {code: mean(points[code]) for code in codes}
 
-    cost = {}
-    for tr_path in TR_DIR.glob("tr__*__M*.json"):
-        data = json.loads(tr_path.read_text(encoding="utf-8"))
-        code = data.get("translator")
-        usage = data.get("usage") or {}
-        price = cfg["prices"].get(code, {"input": 0, "output": 0})
-        dollars = (
-            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
-            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
-        )
-        cost[code] = cost.get(code, 0.0) + dollars
-    for fail_path in TR_DIR.glob("fail__*.json"):
-        data = json.loads(fail_path.read_text(encoding="utf-8"))
-        code = data.get("translator")
-        usage = data.get("usage") or {}
-        price = cfg["prices"].get(code, {"input": 0, "output": 0})
-        cost[code] = cost.get(code, 0.0) + (
-            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
-            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
-        )
 
-    lines = []
-    lines.append("# Translation benchmark summary")
-    lines.append("")
-    lines.append("Judgments: %d. Source size: %d words." % (len(judgments), total_words))
-    if calibration:
-        lines.append("")
-        lines.append("## Judge calibration")
-        lines.append("")
-        lines.append("| judge | caught | needed | result |")
-        lines.append("|---|---|---|---|")
-        for c in calibration:
-            lines.append("| %s | %d/%d | %d | %s |" % (
-                c["judge"], len(c["caught"]), len(c["planted"]), c["needed"],
-                "pass" if c["passed"] else "FAIL, excluded" if c["judge"] in excluded else "FAIL"))
-        if relevant and not excluded:
-            lines.append("")
-            lines.append("Warning: every judge failed calibration; nobody was excluded, read results with care.")
-    lines.append("")
-    lines.append("## Overall")
-    lines.append("")
-    header = ["model", "id"] + list(CRITERIA) + ["total/60", "borda", "mech issues", "cost USD"]
-    lines.append("| " + " | ".join(header) + " |")
-    lines.append("|" + "---|" * len(header))
-    order = sorted(codes, key=lambda c: -mean(borda[c]))
+def per_judge_totals(judgments, codes, disqualified=()):
+    totals = defaultdict(lambda: defaultdict(list))
+    for judgment in judgments:
+        for code in codes:
+            row = None if (judgment["article"], code) in disqualified else judgment["scores"].get(code)
+            if row:
+                totals[judgment["judge"]][code].append(row["total"])
+    for _, code, judge in gated_slots(judgments, codes, disqualified):
+        if judge is not None:
+            totals[judge][code].append(0)
+    return totals
+
+
+def kendall_tau(ranking_a, ranking_b):
+    """Rank agreement in -1..1 over the codes both rankings contain."""
+    common = [c for c in ranking_a if c in ranking_b]
+    if len(common) < 2:
+        return None
+    pos_a = {c: i for i, c in enumerate(common)}
+    pos_b = {c: ranking_b.index(c) for c in common}
+    agree = disagree = 0
+    for x, y in combinations(common, 2):
+        same = (pos_a[x] - pos_a[y]) * (pos_b[x] - pos_b[y])
+        agree, disagree = (agree + 1, disagree) if same > 0 else (agree, disagree + 1)
+    return (agree - disagree) / (agree + disagree)
+
+
+def judge_agreement(judgments):
+    """Mean tau between every pair of judges (forward passes) per article."""
+    by_article = defaultdict(dict)
+    for j in judgments:
+        if j.get("pass", "forward") == "forward":
+            by_article[j["article"]][j["judge"]] = j["ranking"]
+    taus = defaultdict(list)
+    for rankings in by_article.values():
+        for a, b in combinations(sorted(rankings), 2):
+            tau = kendall_tau(rankings[a], rankings[b])
+            if tau is not None:
+                taus[(a, b)].append(tau)
+    return {pair: mean(values) for pair, values in taus.items()}
+
+
+def position_consistency(judgments):
+    """Mean tau between a judge's forward and reverse pass; low means position bias."""
+    passes = defaultdict(dict)
+    for j in judgments:
+        passes[(j["article"], j["judge"])][j.get("pass", "forward")] = j["ranking"]
+    taus = defaultdict(list)
+    for (article, judge), both in passes.items():
+        if "forward" in both and "reverse" in both:
+            tau = kendall_tau(both["forward"], both["reverse"])
+            if tau is not None:
+                taus[judge].append(tau)
+    return {judge: mean(values) for judge, values in taus.items()}
+
+
+def mech_summary(checks):
+    issues = defaultdict(int)
+    disqualified = {}
+    for check in checks:
+        issues[check["translator"]] += len(check["issues"])
+        if check.get("disqualified"):
+            disqualified[(check["article"], check["translator"])] = check["reasons"]
+    return issues, disqualified
+
+
+def latency_means(translations):
+    by_code = defaultdict(list)
+    for tr in translations:
+        latency = (tr.get("usage") or {}).get("latency_sec")
+        if latency is not None:
+            by_code[tr["translator"]].append(latency)
+    return {code: mean(values) for code, values in by_code.items()}
+
+
+def usage_cost(usage, price):
+    usage = usage or {}
+    return (usage.get("prompt_tokens", 0) / 1e6 * price.get("input", 0)
+            + usage.get("completion_tokens", 0) / 1e6 * price.get("output", 0))
+
+
+def translator_costs(cfg, translations, failed):
+    cost = defaultdict(float)
+    for record in translations + failed:
+        code = record.get("translator")
+        cost[code] += usage_cost(record.get("usage"), cfg["prices"].get(code, {}))
+    return cost
+
+
+def judge_costs(cfg, judgments, calibration, failed_calls):
+    cost = defaultdict(float)
+    prices = cfg.get("judge_prices") or {}
+    for record in judgments + calibration + failed_calls:
+        judge = record["judge"]
+        cost[judge] += usage_cost(record.get("usage"), prices.get(judge, {}))
+    return cost
+
+
+def actual_spend(spend_log):
+    return sum(r["after"] - r["before"] for r in spend_log)
+
+
+def source_words(sources):
+    return sum(len(seg["text"].split()) for src in sources for seg in src["segments"])
+
+
+def missing_prices(cfg):
+    missing = [c for c in cfg["translators"] if c not in (cfg.get("prices") or {})]
+    missing += [j for j in cfg.get("judges", {}) if j not in (cfg.get("judge_prices") or {})]
+    return missing
+
+
+# ------------------------------------------------------------ writers (sections)
+
+
+def table(header, rows):
+    lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+    lines += ["| " + " | ".join(str(c) for c in row) + " |" for row in rows]
+    return lines
+
+
+def section_calibration(calibration, excluded):
+    if not calibration:
+        return []
+    rows = []
+    for c in calibration:
+        verdict = "pass" if c["passed"] else ("FAIL, excluded" if c["judge"] in excluded else "FAIL")
+        kinds = ", ".join("%s %s" % (k, "yes" if v else "no") for k, v in (c.get("by_kind") or {}).items())
+        rows.append((c["judge"], "%d/%d" % (len(c["caught"]), len(c["planted"])), c["needed"], verdict, kinds))
+    lines = ["", "## Judge calibration", ""] + table(["judge", "caught", "needed", "result", "by kind"], rows)
+    failed = [c for c in calibration if not c["passed"]]
+    if failed and not excluded:
+        lines += ["", "Warning: every judge failed calibration; nobody was excluded, read results with care."]
+    return lines
+
+
+def section_overall(cfg, order, means, borda, issues, latency, cost):
+    header = ["model", "id"] + list(CRITERIA) + ["total/60", "borda", "mech issues", "latency s", "cost USD"]
+    rows = []
     for code in order:
         row = [cfg["translators"][code], code]
-        total = 0.0
-        for criterion in CRITERIA:
-            value = mean(scores[code][criterion])
-            total += value
-            row.append("%.1f" % value)
-        row.append("%.1f" % total)
-        row.append("%.2f" % mean(borda[code]))
-        row.append(str(mech_issues.get(code, 0)))
-        row.append("%.4f" % cost.get(code, 0.0))
-        lines.append("| " + " | ".join(row) + " |")
+        row += ["%.1f" % means[code][c] for c in CRITERIA]
+        row += ["%.1f" % sum(means[code].values()), "%.2f" % borda[code], issues.get(code, 0),
+                "%.1f" % latency.get(code, 0.0), "%.4f" % cost.get(code, 0.0)]
+        rows.append(row)
+    return ["", "## Overall", ""] + table(header, rows)
 
-    lines.append("")
-    lines.append("## Per judge (average total /60)")
-    lines.append("")
-    judge_names = sorted(per_judge_total)
-    lines.append("| model | " + " | ".join(judge_names) + " |")
-    lines.append("|" + "---|" * (len(judge_names) + 1))
-    for code in order:
-        row = [code]
-        for judge in judge_names:
-            row.append("%.1f" % mean(per_judge_total[judge][code]))
-        lines.append("| " + " | ".join(row) + " |")
 
-    if self_judges:
-        lines.append("")
-        lines.append("## Self-scoring check")
-        lines.append("")
-        for judge, own_code in self_judges.items():
-            if judge in excluded or not per_judge_total[judge][own_code]:
-                lines.append("- %s judging its own translation %s: not counted (judge excluded)"
-                             % (judge, own_code))
-                continue
-            own = mean(per_judge_total[judge][own_code])
-            other_values = [
-                value
-                for other_judge in judge_names
-                if other_judge != judge
-                for value in per_judge_total[other_judge][own_code]
-            ]
-            if not other_values:
-                lines.append(
-                    "- %s judging its own translation %s: %.1f, no other judge to compare"
-                    % (judge, own_code, own)
-                )
-                continue
-            others = mean(other_values)
-            lines.append(
-                "- %s judging its own translation %s: %.1f vs %.1f from other judges"
-                % (judge, own_code, own, others)
-            )
+def section_disqualified(cfg, disqualified):
+    if not disqualified:
+        return []
+    rows = [(article, code, cfg["translators"].get(code, "?"), "; ".join(reasons))
+            for (article, code), reasons in sorted(disqualified.items())]
+    return ["", "## Disqualified by gates (not judged)", ""] + table(["article", "id", "model", "reasons"], rows)
 
-    judge_cost = defaultdict(float)
-    judge_prices = cfg.get("judge_prices", {})
-    failed_calls = [
-        json.loads(f.read_text(encoding="utf-8"))
-        for folder in (JUDG_DIR, CAL_DIR)
-        for f in folder.glob("fail__*.json")
-    ]
-    for judgment in all_judgments + list(calibration) + failed_calls:
-        judge = judgment["judge"]
-        usage = judgment.get("usage") or {}
-        price = judge_prices.get(judge, {"input": 0, "output": 0})
-        judge_cost[judge] += (
-            usage.get("prompt_tokens", 0) / 1e6 * price["input"]
-            + usage.get("completion_tokens", 0) / 1e6 * price["output"]
-        )
-    lines.append("")
-    lines.append("## Spend USD")
-    lines.append("")
-    lines.append("| who | model | cost |")
-    lines.append("|---|---|---|")
-    for code in codes:
-        lines.append("| %s | %s | %.4f |" % (code, cfg["translators"][code], cost.get(code, 0.0)))
-    for judge in sorted(judge_cost):
-        lines.append("| %s | %s | %.4f |" % (judge, cfg["judges"].get(judge, "?"), judge_cost[judge]))
-    total_spend = sum(cost.values()) + sum(judge_cost.values())
-    lines.append("| total (estimate from tokens) | | %.4f |" % total_spend)
-    spend_log = Path("data/report/spend_log.jsonl")
-    if spend_log.exists():
-        actual = 0.0
-        for row in spend_log.read_text(encoding="utf-8").splitlines():
-            if row.strip():
-                rec = json.loads(row)
-                actual += rec["after"] - rec["before"]
-        lines.append("")
-        lines.append("Actual spend by OpenRouter key usage: %.4f USD. It includes any other use of"
-                     " the same key during the run and may lag by a few seconds; the per-model rows"
-                     " above are token estimates." % actual)
-    missing_prices = [c for c in codes if c not in cfg.get("prices", {})]
-    missing_prices += [j for j in cfg.get("judges", {}) if j not in judge_prices]
-    if missing_prices:
-        lines.append("")
-        lines.append("Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing_prices))
 
-    lines.append("")
-    lines.append("## Flags (%d)" % len(flags))
-    lines.append("")
-    for flag in flags:
-        lines.append(
-            "- [%s] %s %s %s: %s"
-            % (
-                flag.get("judge", "?"),
-                flag.get("translator", "?"),
-                flag.get("segment", "?"),
-                flag.get("criterion", "?"),
-                str(flag.get("quote", ""))[:160],
-            )
-        )
+def section_per_judge(order, totals):
+    judges = sorted(totals)
+    rows = [[code] + ["%.1f" % mean(totals[j][code]) for j in judges] for code in order]
+    return ["", "## Per judge (average total /60)", ""] + table(["model"] + judges, rows)
 
+
+def section_agreement(agreement, consistency):
+    lines = []
+    if agreement:
+        rows = [("%s vs %s" % pair, "%.2f" % tau) for pair, tau in sorted(agreement.items())]
+        lines += ["", "## Judge agreement (Kendall tau, 1 = identical ranking)", ""] + table(["judges", "tau"], rows)
+    if consistency:
+        rows = [(judge, "%.2f" % tau) for judge, tau in sorted(consistency.items())]
+        lines += ["", "## Position consistency (forward vs reverse pass, 1 = no position bias)", ""]
+        lines += table(["judge", "tau"], rows)
+    return lines
+
+
+def section_self_scoring(cfg, totals, excluded):
+    participants = {model: code for code, model in cfg["translators"].items()}
+    self_judges = {j: participants[m] for j, m in cfg.get("judges", {}).items() if m in participants}
+    if not self_judges:
+        return []
+    lines = ["", "## Self-scoring check", ""]
+    for judge, own_code in self_judges.items():
+        lines.append(_self_scoring_line(judge, own_code, totals, excluded))
+    return lines
+
+
+def _self_scoring_line(judge, own_code, totals, excluded):
+    if judge in excluded or not totals[judge][own_code]:
+        return "- %s judging its own translation %s: not counted (judge excluded)" % (judge, own_code)
+    own = mean(totals[judge][own_code])
+    others = [v for other in totals if other != judge for v in totals[other][own_code]]
+    if not others:
+        return "- %s judging its own translation %s: %.1f, no other judge to compare" % (judge, own_code, own)
+    return "- %s judging its own translation %s: %.1f vs %.1f from other judges" % (judge, own_code, own, mean(others))
+
+
+def section_spend(cfg, tr_cost, judge_cost, actual, missing):
+    rows = [(code, cfg["translators"][code], "%.4f" % tr_cost.get(code, 0.0)) for code in cfg["translators"]]
+    rows += [(judge, cfg["judges"].get(judge, "?"), "%.4f" % judge_cost[judge]) for judge in sorted(judge_cost)]
+    rows.append(("total (estimate from tokens)", "", "%.4f" % (sum(tr_cost.values()) + sum(judge_cost.values()))))
+    lines = ["", "## Spend USD", ""] + table(["who", "model", "cost"], rows)
+    if actual is not None:
+        lines += ["", "Actual spend by OpenRouter key usage: %.4f USD. It includes any other use of"
+                  " the same key during the run and may lag by a few seconds; the per-model rows"
+                  " above are token estimates." % actual]
+    if missing:
+        lines += ["", "Warning: no price in config.yaml for %s, their cost shows 0." % ", ".join(missing)]
+    return lines
+
+
+def section_flags(judgments):
+    flags = [(j["judge"], f) for j in judgments for f in j.get("flags", [])]
+    lines = ["", "## Flags (%d)" % len(flags), ""]
+    for judge, f in flags:
+        lines.append("- [%s] %s %s %s: %s" % (judge, f.get("translator", "?"), f.get("segment", "?"),
+                                              f.get("criterion", "?"), str(f.get("quote", ""))[:160]))
+    return lines
+
+
+# ------------------------------------------------------------ main
+
+
+def build_report(cfg, data):
+    codes = list(cfg["translators"])
+    excluded = excluded_judges(data["calibration"], data["judgments"])
+    counted = [j for j in data["judgments"] if j["judge"] not in excluded]
+    issues, disqualified = mech_summary(data["checks"])
+    means = criterion_means(counted, codes, disqualified)
+    borda = borda_means(counted, codes, disqualified)
+    order = sorted(codes, key=lambda c: -borda[c])
+    tr_cost = translator_costs(cfg, data["translations"], data["failed_translations"])
+    j_cost = judge_costs(cfg, data["judgments"], data["calibration"], data["failed_judge_calls"])
+    actual = actual_spend(data["spend_log"]) if data["spend_log"] else None
+    lines = ["# Translation benchmark summary", "",
+             "Judgments: %d (%d counted). Source size: %d words."
+             % (len(data["judgments"]), len(counted), source_words(data["sources"]))]
+    lines += section_calibration(data["calibration"], excluded)
+    lines += section_overall(cfg, order, means, borda, issues, latency_means(data["translations"]), tr_cost)
+    lines += section_disqualified(cfg, disqualified)
+    lines += section_per_judge(order, per_judge_totals(counted, codes, disqualified))
+    lines += section_agreement(judge_agreement(data["judgments"]), position_consistency(data["judgments"]))
+    lines += section_self_scoring(cfg, per_judge_totals(counted, codes, disqualified), excluded)
+    lines += section_spend(cfg, tr_cost, j_cost, actual, missing_prices(cfg))
+    lines += section_flags(data["judgments"])
+    return "\n".join(lines) + "\n"
+
+
+def main():
+    cfg = load_cfg()
+    data = load_inputs()
+    if not data["judgments"]:
+        print("no judgments; run src.judge first")
+        return 1
+    report = build_report(cfg, data)
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    OUT.write_text(report, encoding="utf-8")
     print("wrote %s" % OUT)
     print()
-    print("\n".join(lines[:20]))
+    print("\n".join(report.splitlines()[:25]))
     return 0
 
 

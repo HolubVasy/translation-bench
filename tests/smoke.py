@@ -61,7 +61,7 @@ def main():
         shutil.copy(REPO / "config.yaml", tmp / "config.yaml")
         shutil.copytree(REPO / "skills", tmp / "skills")
         os.chdir(tmp)
-        from src import aggregate, assemble, calibrate, convert, mech_check
+        from src import aggregate, assemble, calibrate, convert, mech_check, preflight
 
         make_pdf(tmp / "1.pdf")
         check(convert.main([str(tmp / "1.pdf")]) == 0, "convert pdf")
@@ -74,6 +74,9 @@ def main():
         check("Company Report Header" not in texts, "running header removed")
         check(not any(s["text"].strip() in ("1", "2") for s in segs), "page numbers removed")
         check(Path("data/source/images/a1/IMAGE_1.png").exists(), "image saved")
+        check(preflight.main([]) == 0, "preflight passes on the shipped config")
+        manifest = json.loads(Path("data/report/manifest.json").read_text())
+        check("run_id" in manifest and manifest["skills"], "manifest written with skill hashes")
 
         cfg = calibrate.load_cfg()
         codes = list(cfg["translators"])
@@ -84,19 +87,31 @@ def main():
             if code == codes[-1]:
                 tr = json.loads(json.dumps(tr))
                 tr["segments"][1]["text"] = tr["segments"][1]["text"].replace("25", "52")
+            if code == codes[-2]:
+                tr = json.loads(json.dumps(tr))
+                for seg_ in tr["segments"]:
+                    if seg_["type"] != "image":
+                        seg_["text"] = "x"
+            tr["usage"]["latency_sec"] = 2.5
             Path("data/translations/tr__a1__%s.json" % code).write_text(json.dumps(tr))
         check(mech_check.main() == 0, "mech check runs")
         mech = json.loads(Path("data/checks/mech__a1__%s.json" % codes[-1]).read_text())
         check(len(mech["issues"]) >= 1, "mech check catches the broken number")
+        short = json.loads(Path("data/checks/mech__a1__%s.json" % codes[-2]).read_text())
+        check(short["disqualified"] and "length ratio" in short["reasons"][0],
+              "gate disqualifies the far too short translation")
 
         Path("data/judgments").mkdir(parents=True, exist_ok=True)
-        for j in cfg["judges"]:
+        judged = [c for c in codes if c != codes[-2]]
+        for i, j in enumerate(cfg["judges"]):
             scores = {c: {"meaning": 8, "completeness": 9, "data": 9, "naturalness": 7,
-                          "flow": 8, "clean": 10, "total": 51} for c in codes}
-            Path("data/judgments/ev__a1__by__%s.json" % j).write_text(json.dumps(
-                {"protocol": "evaluation", "article": "a1", "judge": j,
-                 "ranking": codes, "scores": scores, "flags": [], "verdict": "t",
-                 "usage": {"prompt_tokens": 9000, "completion_tokens": 700}}))
+                          "flow": 8, "clean": 10, "total": 51} for c in judged}
+            for pass_name, suffix in (("forward", ""), ("reverse", "__r")):
+                ranking = judged[::-1] if (pass_name == "reverse" and i == 0) else judged
+                Path("data/judgments/ev__a1__by__%s%s.json" % (j, suffix)).write_text(json.dumps(
+                    {"protocol": "evaluation", "article": "a1", "judge": j, "pass": pass_name,
+                     "ranking": ranking, "scores": scores, "flags": [], "verdict": "t",
+                     "usage": {"prompt_tokens": 9000, "completion_tokens": 700}}))
 
         base = json.loads(Path("data/translations/tr__a1__%s.json" % codes[0]).read_text())
         decoy, planted = calibrate.make_decoy(calibrate.strip_for_judge(base))
@@ -126,6 +141,10 @@ def main():
         check("## Judge calibration" in report and "FAIL, excluded" in report,
               "calibration section and exclusion shown")
         check("## Spend USD" in report, "spend section present")
+        check("## Disqualified by gates" in report and codes[-2] in report, "disqualified section lists the gated translation")
+        check("## Judge agreement" in report and "## Position consistency" in report, "agreement sections present")
+        check("| J1 | -1.00 |" in report, "reversed pass of J1 shows tau -1")
+        check("latency s" in report and "2.5" in report, "latency column present")
         check("Actual spend by OpenRouter key usage: 1.0000 USD" in report, "actual spend from key usage delta")
         price_in = cfg["prices"][codes[0]]["input"]
         check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
@@ -136,22 +155,24 @@ def main():
         spent = {}
         add_usage(spent, {"prompt_tokens": 10, "completion_tokens": 5})
         add_usage(spent, {"prompt_tokens": 7})
-        check(spent == {"prompt_tokens": 17, "completion_tokens": 5},
+        check(spent == {"prompt_tokens": 17, "completion_tokens": 5, "latency_sec": 0.0, "latency_total_sec": 0.0},
               "usage accumulates across attempts")
 
         check(assemble.main(["--translator", codes[0]]) == 0, "assemble runs")
         tie_dir = Path("data/judgments")
         saved = {f: f.read_text() for f in tie_dir.glob("ev__*.json")}
-        for i, f in enumerate(sorted(saved)):
+        forward_files = [f for f in sorted(saved) if not f.stem.endswith("__r")]
+        for i, f in enumerate(forward_files):
             data = json.loads(saved[f])
             pair = [codes[1], codes[0]] if i % 2 == 0 else [codes[0], codes[1]]
-            data["ranking"] = pair + [c for c in codes if c not in pair]
+            data["ranking"] = pair + [c for c in data["ranking"] if c not in pair]
             f.write_text(json.dumps(data))
         for f in Path("data/calibration").glob("cal__by__*.json"):
             f.rename(f.with_suffix(".bak"))
-        keep = sorted(saved)[:2]
-        for f in sorted(saved)[2:]:
-            f.rename(f.with_suffix(".bak"))
+        forward = [f for f in sorted(saved) if not f.stem.endswith("__r")]
+        for f in sorted(saved):
+            if f not in forward[:2]:
+                f.rename(f.with_suffix(".bak"))
         check(assemble.borda_winner() == codes[0], "Borda tie goes to the first code in config")
         for f in tie_dir.glob("*.bak"):
             f.rename(f.with_suffix(".json"))

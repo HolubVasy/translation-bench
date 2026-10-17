@@ -1,70 +1,69 @@
 # Roadmap
 
-Work that is agreed or proposed but not yet built. Each item has a status,
-the reason it exists and what done looks like. Items move to "Done" with a
-link to the PR that closed them.
+The plan, in waves. Each wave is a GitHub issue with one sub-issue per
+item; this file is the map, the issues are the tasks. Numbers in
+parentheses refer to the owner's review of the 55 proposals (October 2026).
 
-Status values: planned (agreed, waiting for its turn), parked (worth doing,
-not now), idea (proposed, not yet agreed).
+## Wave 0. Baseline run
 
-## Planned
+Run the benchmark on three real PDF articles with the code as it stands.
+Every later decision is checked against these numbers.
 
-### R1. Value metric: quality per dollar
-Status: planned, ships with the first real run.
-Why: three columns (accuracy, completeness, cost) start a debate; one number
-answers "which model to take".
-Done when: report has a `value` column = weighted quality / cost per 1K
-source words, sorted by it. Weights in config.yaml, default meaning 0.4,
-completeness 0.2, data 0.2, naturalness 0.2.
+## Wave 1. Validity (release 1, in progress)
 
-### R2. Commit source JSON of each run
-Status: planned, ships with the first real run.
-Why: a run must be reproducible; the converted sources are its input.
-Done when: data/source/a*.json of the run is committed through a PR, images
-stay out of git.
+Shipped in release 1:
+- Deterministic gates before judging: length ratio, source-script
+  residue, glossary violations, missing segments; list marker and glossary
+  segment checks (4', 13, 29).
+- Glossary in the translator and judge prompts and checked by script (7, 31).
+- Reversed second judge pass and Kendall tau between judges and between a
+  judge's two passes (5, 6).
+- Subtle decoys: modality and quantifier planters next to the coarse ones;
+  catch rate per kind in the report (10).
+- Latency per call in the report (40).
+- Preflight: config and skill validation, cost estimate, budget guard, run
+  manifest with model ids and skill hashes (16, 17, 20, 21).
+- Hardened JSON extraction and unit tests for every logic function.
 
-## Parked
+Still in wave 1:
+- Prices pulled from the OpenRouter models endpoint (12).
+- DeepL and Google Translate as extra translators M7, M8 (54).
+- Cheap-model pre-screen of critical errors before expensive judges (13).
 
-### R3. Noise floor measurement
-Status: parked (tuning).
-Why: with three articles the main risk is mistaking run-to-run noise for a
-difference between models.
-Idea: translate one article twice with the same model, let the judges score
-both as different translators. The gap between the two runs is the noise
-floor; a gap between models below it is not a gap.
-Done when: report shows the noise floor next to the ranking.
+## Wave 2. Scale and robustness
 
-### R4. Owner's blind reading
-Status: parked, after the first run.
-Why: checks that the judges' taste matches the owner's. If it does not, the
-criteria or the weights are tuned to the wrong reader.
-Idea: the owner reads the two best translations of one article, codes only,
-and gives his own order. No code needed beyond a small helper that prints
-the two texts side by side.
-Done when: agreement or disagreement with the judges is recorded here.
+MQM error categories with severity weights (8, 9), back-translation check
+(2), structured output where the provider supports it (18), Pydantic
+protocols (24), retries with jitter (23), parallel requests (19), PDF
+converter tests on real pages (25), Dependabot, pre-commit hook, skill
+versioning (42, 43, 45).
 
-### R5. Branch protection on main
-Status: parked, needs the owner's explicit go-ahead.
-Why: the PR-only rule in CLAUDE.md is held by discipline, not by GitHub.
-Note: classic branch protection on a private repository may require GitHub
-Pro; check before enabling.
+## Wave 3. Accumulation
 
-## Ideas
+SQLite index and a folder per run (22), pairwise comparisons so a new
+model does not require re-judging old ones (1), reference translation and
+COMET or chrF (3, 4), static HTML pages: segmentation preview, report,
+quality-vs-cost chart, side-by-side view (26, 37, 38, 39), tables in PDF,
+captions, PDF output (27, 35, 36).
 
-### R6. Two-column PDF and tables
-Status: idea.
-Why: the PDF converter reads layout heuristically; two-column pages and
-tables may come out in the wrong order.
-Done when: converter detects columns by block x-position and emits tables
-as one segment per row.
+## Wave 4. Product
 
-### R7. Calibration on more than one article
-Status: idea.
-Why: one decoy is a cheap sanity check, not a measurement of judge recall.
-Done when: calibration takes a list of articles and reports catch rate.
+Web UI on the VPS (48), the two-pass pipeline registered as a translator
+and later as its own product (33, 52), three variants per paragraph (53),
+style guide as a prompt setting (32), quality by text length (51), more
+input formats (28), notifications and Telegram (49, 55), Notion page per
+run (41), other language pairs (50).
+
+## Dropped
+
+PR template (44) and a GitHub Actions run button (46): the owner valued
+them below the web UI.
 
 ## Done
 
 - PR-only rule, README, CLAUDE.md: PR #1.
 - PDF input, judge calibration with planted decoy, docx assembly, CI smoke
   test and Claude review: PR #2.
+- Roadmap and docs: PR #3. Merge policy: PR #4.
+- Review findings on spend, self-scoring, calibration fallback, actual
+  spend from the OpenRouter key: PR #5.

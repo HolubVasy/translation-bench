@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from . import prompts
+from .preflight import load_glossary
 from .openrouter import (OpenRouterError, ValidationFailed, add_usage, chat,
                          extract_json, key_usage, log_spend, run_stamp)
 
@@ -27,11 +28,16 @@ def validate_translation(source, result):
     """Same ids, same order, same types; text non-empty; image placeholders kept."""
     errors = []
     src_segs = source["segments"]
-    out_segs = result.get("segments", [])
+    out_segs = result.get("segments") if isinstance(result, dict) else None
+    if not isinstance(out_segs, list):
+        return ["segments is not a list"]
     if len(src_segs) != len(out_segs):
         errors.append("segment count %d != %d" % (len(out_segs), len(src_segs)))
         return errors
     for src, out in zip(src_segs, out_segs):
+        if not isinstance(out, dict):
+            errors.append("%s: segment is not an object" % src["id"])
+            continue
         if out.get("id") != src["id"]:
             errors.append("id mismatch: %s vs %s" % (out.get("id"), src["id"]))
             continue
@@ -39,15 +45,18 @@ def validate_translation(source, result):
             errors.append("%s: type changed" % src["id"])
         if src["type"] == "image" and out.get("text") != src["text"]:
             errors.append("%s: image placeholder changed" % src["id"])
-        if not str(out.get("text", "")).strip():
+        text = out.get("text")
+        if not isinstance(text, str):
+            errors.append("%s: text is not a string" % src["id"])
+        elif not text.strip():
             errors.append("%s: empty text" % src["id"])
     return errors
 
 
-def translate_one(cfg, article_path, code, model):
+def translate_one(cfg, article_path, code, model, glossary=()):
     source = json.loads(article_path.read_text(encoding="utf-8"))
     article_json = json.dumps(source, ensure_ascii=False, indent=1)
-    prompt = prompts.build_translator_prompt(cfg, article_json)
+    prompt = prompts.build_translator_prompt(cfg, article_json, glossary)
     req = cfg["request"]
     last_errors = None
     spent = {}
@@ -95,6 +104,7 @@ def main(argv):
         print("no source articles in %s; run src.convert first" % SRC_DIR)
         return 1
     failures = 0
+    glossary = load_glossary(cfg)
     usage_before = key_usage()
     for article_path in articles:
         for code, model in cfg["translators"].items():
@@ -104,7 +114,7 @@ def main(argv):
                 continue
             print("translate %s with %s (%s) ..." % (article_path.stem, code, model))
             try:
-                result = translate_one(cfg, article_path, code, model)
+                result = translate_one(cfg, article_path, code, model, glossary)
             except ValidationFailed as err:
                 failures += 1
                 print("  FAILED: %s" % err)

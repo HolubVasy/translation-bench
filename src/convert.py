@@ -271,7 +271,7 @@ def main(argv):
         return 1
     SRC_DIR.mkdir(parents=True, exist_ok=True)
     next_seq = 1
-    for raw in argv:
+    for raw in [a for a in argv if not a.startswith("--")]:
         path = Path(raw)
         digits = re.sub(r"\D", "", path.stem)
         article_id = int(digits) if digits else next_seq

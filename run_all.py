@@ -2,18 +2,19 @@
 
 Usage:
   python run_all.py convert articles/1.pdf articles/2.pdf articles/3.pdf
+  python run_all.py preflight [--force]
   python run_all.py translate
   python run_all.py check
   python run_all.py judge
   python run_all.py calibrate
   python run_all.py report
   python run_all.py assemble [--translator M4]
-  python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf
+  python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf [--force]
 """
 
 import sys
 
-from src import aggregate, assemble, calibrate, convert, judge, mech_check, translate
+from src import aggregate, assemble, calibrate, convert, judge, mech_check, preflight, translate
 
 
 def main(argv):
@@ -23,6 +24,8 @@ def main(argv):
     stage, rest = argv[0], argv[1:]
     if stage == "convert":
         return convert.main(rest)
+    if stage == "preflight":
+        return preflight.main(rest)
     if stage == "translate":
         return translate.main(rest)
     if stage == "check":
@@ -38,6 +41,7 @@ def main(argv):
     if stage == "full":
         steps = [
             lambda: convert.main(rest),
+            lambda: preflight.main([a for a in rest if a.startswith("--")]),
             lambda: translate.main([]),
             lambda: mech_check.main(),
             lambda: judge.main(),

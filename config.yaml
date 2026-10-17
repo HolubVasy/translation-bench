@@ -26,15 +26,36 @@ judge_prices:
   J2: {input: 10.00, output: 50.00}
   J3: {input: 2.00, output: 10.00}
 
-# Judge calibration: a copy of one real translation with three planted errors
-# (negation, number, omission). A judge flagging fewer than min_caught of them
-# is left out of the overall tables.
+# Judge calibration: a copy of one real translation with planted errors, one
+# per kind listed below (src/calibrate.py PLANTERS). A judge flagging fewer
+# than min_caught planted segments is left out of the overall tables.
 calibration:
   enabled: true
   article: a1
   base_translator: M4
   label: M6          # neutral blind label, must not clash with a translator code
-  min_caught: 2
+  min_caught: 3
+  kinds: [negation, number, omission, modality, quantifier]
+
+# Deterministic gates (src/mech_check.py). A translation outside these limits
+# is disqualified before any judge sees it.
+gates:
+  length_ratio: {min: 0.6, max: 1.8}   # target words / source words
+  max_source_script_chars: 0           # Cyrillic letters allowed in a translation
+  max_glossary_violations: 3
+
+# Optional glossary of terms the translation must use (see glossary.example.yaml).
+# glossary: glossary.yaml
+
+judging:
+  double_pass: true                    # second judge pass in reversed order (position bias check)
+
+# Preflight estimate and budget guard (src/preflight.py).
+budget:
+  max_usd: 10.0
+  tokens_per_char: 0.35
+  prompt_overhead_tokens: 600
+  judge_output_tokens: 1500
 
 source_lang: Russian
 target_lang: English

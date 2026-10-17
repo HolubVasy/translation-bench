@@ -44,11 +44,19 @@ how to read the report. This file covers how to work on the code.
     0 findings). Any confirmed finding, a red check, or a review that did
     not actually run (step finished in seconds) stops the merge and goes
     to the owner.
-11. Findings are tasks. Every confirmed review finding and every bug found
-    while working becomes a task in the owner's Notion Tasks database
-    (ID prefix TB-, title, file:line, scenario, status). The task is moved
-    to Done with the PR that fixes it. Fixing continues until the review
-    is clean; only then the merge policy applies.
+11. Findings are tasks, in GitHub Issues. Every confirmed review finding
+    and every bug found while working becomes an issue in this repository
+    (title, file:line, scenario). The fixing PR says `Fixes #N` so the
+    issue closes on merge. Fixing continues until the review is clean;
+    only then the merge policy applies. Issues are the task list; the plan
+    lives in `docs/ROADMAP.md` and links to issues, never the other way.
+12. Review loop limit. After three review rounds on one PR that each
+    produce only Low findings, the remaining Lows become issues and the
+    PR merges. A Medium or High finding always blocks.
+13. Code style is `docs/STYLE.md`. In short: one function does one job and
+    fits on a screen, names are verbs for functions and nouns for data,
+    IO at the edges and logic in the middle, extend by adding a registry
+    entry rather than a class, every logic function has an offline test.
 
 ## Before proposing a change
 
@@ -59,6 +67,7 @@ how to read the report. This file covers how to work on the code.
 ## Working on the VPS
 
 - Repository path: `~/workspace/translation-bench`, virtualenv in `.venv`.
+- Checks: `python -m pytest` (unit) and `python tests/smoke.py` (end to end, offline).
 - The OpenRouter key is taken from the LibreChat container with
   `scripts/write_env.sh`. Do not copy it anywhere else.
 - Remote: `https://github.com/HolubVasy/translation-bench` (private).
@@ -66,6 +75,6 @@ how to read the report. This file covers how to work on the code.
 
 ## Definition of done for a PR
 
-- Stage smoke run passed and artifacts cleaned.
+- Unit tests and the smoke test pass; a new logic function brings its test.
 - `README.md` updated if the workflow or layout changed.
 - Commit message says what changed and why, in one line plus bullets.
