@@ -64,7 +64,7 @@ def test_gates_disqualify_on_length_and_residue():
     ok = article("one two three four five six seven eight nine ten")
     assert run_gates(source, ok, [], DEFAULT_GATES) == []
     residue = [{"segment": "S1-p1", "kind": "source_script", "missing": [], "extra": ["4 cyrillic chars"]}]
-    assert run_gates(source, ok, residue, DEFAULT_GATES) == ["4 source-script chars left in the translation"]
+    assert run_gates(source, ok, residue, DEFAULT_GATES) == ["4 units of source-language residue left in the translation"]
 
 
 def test_gates_disqualify_on_glossary_and_missing_segments():
@@ -74,3 +74,10 @@ def test_gates_disqualify_on_glossary_and_missing_segments():
     assert run_gates(source, tr, too_many, DEFAULT_GATES) == ["4 glossary violations"]
     missing = [{"segment": "S1-p2", "kind": "missing_segment"}]
     assert run_gates(source, tr, missing, DEFAULT_GATES) == ["missing segments: S1-p2"]
+
+
+def test_english_residue_counts_function_words_not_names_or_units():
+    from src.mech_check import count_cyrillic, count_english_function_words
+    assert count_english_function_words("The rate of the BSA and CMC was high")[0] == 5
+    assert count_english_function_words("BSA, CMC, Lys 14.31 kDa, Kokol et al. 2023")[0] == 0
+    assert count_cyrillic("\u0442\u0435\u043a\u0441\u0442 BSA")[0] == 5

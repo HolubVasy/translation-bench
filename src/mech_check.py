@@ -31,6 +31,28 @@ URL_RE = re.compile(r"https?://[^\s\)\]\>\"']+")
 PLACEHOLDER_RE = re.compile(r"\[IMAGE_\d+\]")
 LIST_MARKER_RE = re.compile(r"^(?:[-*]|\d+[.)])\s")
 CYRILLIC_RE = re.compile("[\u0400-\u04ff]")
+ENGLISH_FUNCTION_WORDS = frozenset(
+    "the and of with which were that from this these was are is for by onto into "
+    "their been have has than then there where while when".split())
+WORD_RE = re.compile(r"[A-Za-z]+")
+
+
+def count_cyrillic(text):
+    """Cyrillic letters: untranslated Russian in a translation out of Russian."""
+    return len(CYRILLIC_RE.findall(text)), "cyrillic chars"
+
+
+def count_english_function_words(text):
+    """English function words: untranslated English sentences survive as these.
+    Names, units and abbreviations kept in Latin script do not count."""
+    words = [w.lower() for w in WORD_RE.findall(text)]
+    return sum(w in ENGLISH_FUNCTION_WORDS for w in words), "english function words"
+
+
+RESIDUE_DETECTORS = {
+    "Russian": count_cyrillic,
+    "English": count_english_function_words,
+}
 
 DEFAULT_GATES = {
     "length_ratio": {"min": 0.6, "max": 1.8},
@@ -124,14 +146,17 @@ def check_glossary(src_seg, out_seg, glossary):
     return {"kind": "glossary", "missing": missing, "extra": []}
 
 
+RESIDUE = {"detector": count_cyrillic}  # set from config.source_lang in main()
+
+
 def check_source_script(src_seg, out_seg, glossary):
-    """Source-script letters left in the translation (untranslated text)."""
+    """Source-language residue left in the translation (untranslated text)."""
     if src_seg["type"] == "image":
         return None
-    count = len(CYRILLIC_RE.findall(out_seg["text"]))
+    count, unit = RESIDUE["detector"](out_seg["text"])
     if not count:
         return None
-    return {"kind": "source_script", "missing": [], "extra": ["%d cyrillic chars" % count]}
+    return {"kind": "source_script", "missing": [], "extra": ["%d %s" % (count, unit)]}
 
 
 SEGMENT_CHECKS = {
@@ -181,7 +206,7 @@ def gate_source_script(source, translation, issues, limits):
     chars = sum(int(i["extra"][0].split()[0]) for i in issues if i["kind"] == "source_script")
     if chars <= limits["max_source_script_chars"]:
         return None
-    return "%d source-script chars left in the translation" % chars
+    return "%d units of source-language residue left in the translation" % chars
 
 
 def gate_glossary(source, translation, issues, limits):
@@ -246,6 +271,7 @@ def print_summary(records):
 
 def main():
     cfg = load_cfg()
+    RESIDUE["detector"] = RESIDUE_DETECTORS.get(cfg.get("source_lang"), count_cyrillic)
     sources = load_sources()
     if not sources:
         print("no sources; run src.convert first")

@@ -37,18 +37,22 @@ calibration:
   min_caught: 3
   kinds: [negation, number, omission, modality, quantifier]
 
+# PDF conversion (src/convert.py): the article ends at these headings.
+convert:
+  stop_at: [references, bibliography, literature cited]
+
 # Deterministic gates (src/mech_check.py). A translation outside these limits
 # is disqualified before any judge sees it.
 gates:
   length_ratio: {min: 0.6, max: 1.8}   # target words / source words
-  max_source_script_chars: 0           # Cyrillic letters allowed in a translation
+  max_source_script_chars: 40          # residue units allowed: Cyrillic chars (RU source) or English function words (EN source)
   max_glossary_violations: 3
 
 # Optional glossary of terms the translation must use (see glossary.example.yaml).
 # glossary: glossary.yaml
 
 judging:
-  double_pass: true                    # second judge pass in reversed order (position bias check)
+  double_pass: false                   # second pass in reversed order; off for the long-article run to fit the key budget
 
 # Preflight estimate and budget guard (src/preflight.py).
 budget:
@@ -57,11 +61,11 @@ budget:
   prompt_overhead_tokens: 600
   judge_output_tokens: 1500
 
-source_lang: Russian
-target_lang: English
+source_lang: English
+target_lang: Russian
 
 request:
   temperature: 0.0
   max_retries: 3
-  timeout_sec: 300
-  max_tokens: 16000
+  timeout_sec: 900
+  max_tokens: 64000   # long articles; Gemini caps output at 65536

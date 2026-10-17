@@ -46,6 +46,7 @@ def make_pdf(path):
         page.insert_textbox(pymupdf.Rect(72, y, 520, y + 40), title, fontsize=22)
         y += 60
         for text in paras:
+            text = text if pno == 0 else text.replace("first", "third").replace("second", "fourth")
             page.insert_textbox(pymupdf.Rect(72, y, 520, y + 70), text, fontsize=11)
             y += 90
         if pno == 0:
