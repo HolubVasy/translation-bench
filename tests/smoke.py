@@ -146,9 +146,10 @@ def main():
         check("| J1 | -1.00 |" in report, "reversed pass of J1 shows tau -1")
         check("latency s" in report and "2.5" in report, "latency column present")
         check("Actual spend by OpenRouter key usage: 1.0000 USD" in report, "actual spend from key usage delta")
-        price_in = cfg["prices"][codes[0]]["input"]
-        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], 0.0013 + price_in) in report
-              or price_in == 0, "failed but billed attempts counted in spend")
+        price = cfg["prices"][codes[0]]
+        expected = (1000 * price["input"] + 800 * price["output"]) / 1e6 + price["input"]
+        check("| %s | %s | %.4f |" % (codes[0], cfg["translators"][codes[0]], expected) in report,
+              "failed but billed attempts counted in spend")
         check("not counted (judge excluded)" in report,
               "excluded self-judge is not shown as a 0.0 score")
         from src.openrouter import add_usage
