@@ -227,3 +227,11 @@ def test_gated_translation_gets_zero_on_an_article_nobody_judged():
     borda = borda_means(judged, CODES, disqualified)
     assert borda["M3"] == 0.0
     assert criterion_means(judged, CODES, disqualified)["M3"]["meaning"] == 0
+
+
+def test_existing_judgment_is_reused_only_for_the_same_admitted_set(tmp_path):
+    from src.judge import judged_same_set
+    path = tmp_path / "ev__a1__by__J1.json"
+    path.write_text(json.dumps({"presentation_order": ["M2", "M1"]}))
+    assert judged_same_set(path, {"M1": "", "M2": ""})
+    assert not judged_same_set(path, {"M1": "", "M2": "", "M3": ""})

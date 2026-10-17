@@ -133,6 +133,19 @@ def planned_rounds(cfg, articles):
                 yield article, judge_code, model, pass_name
 
 
+def judged_same_set(path, translations):
+    """An existing judgment is reused only if it judged exactly the set that
+    the gates admit now; a changed gate verdict makes it stale."""
+    saved = json.loads(path.read_text(encoding="utf-8")).get("presentation_order", [])
+    return set(saved) == set(translations)
+
+
+def retire_stale(path):
+    stale = path.with_name("stale__%s__%s" % (run_stamp(), path.name))
+    path.rename(stale)
+    print("retired %s: admitted set changed since it was judged" % path.name)
+
+
 def output_path(article, judge_code, pass_name):
     return OUT_DIR / ("ev__%s__by__%s%s.json" % (article, judge_code, PASSES[pass_name]))
 
@@ -201,15 +214,17 @@ def main():
     failures = 0
     for article, judge_code, model, pass_name in planned_rounds(cfg, articles):
         out = output_path(article, judge_code, pass_name)
-        if out.exists():
-            print("skip %s (exists)" % out.name)
-            continue
         try:
             translations = admitted_translations(cfg, article)
         except FileNotFoundError as err:
             print("skip %s: missing %s" % (out.name, err))
             failures += 1
             continue
+        if out.exists() and judged_same_set(out, translations):
+            print("skip %s (exists)" % out.name)
+            continue
+        if out.exists():
+            retire_stale(out)
         if not translations:
             print("skip %s: no admitted translation" % out.name)
             continue
