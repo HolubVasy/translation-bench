@@ -78,3 +78,5 @@ how to read the report. This file covers how to work on the code.
 - Unit tests and the smoke test pass; a new logic function brings its test.
 - `README.md` updated if the workflow or layout changed.
 - Commit message says what changed and why, in one line plus bullets.
+
+Process of work and where the state lives: docs/PROCESS.md. Any agent of any vendor starts from AGENTS.md.
