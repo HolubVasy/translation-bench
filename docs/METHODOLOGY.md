@@ -69,9 +69,11 @@ themselves (section 6).
 
 ## 5. Price
 
-Actual cost per call is taken from the provider, not estimated. Prices are
-compared per 1000 source words and at list price; promotional prices are
-not used for decisions because they end.
+Actual cost per call is taken from the provider, not estimated. The report
+shows the total billed cost per translator. The price per 1000 source words
+is that cost divided by the document size, worked out by hand today (issue
+#88). Decisions use list prices; promotional prices are not used because
+they end.
 
 ## 6. Tiers and the guarantee
 
@@ -81,6 +83,9 @@ not used for decisions because they end.
 | Optimized | accurate and citable, plain wording | meaning 9+, completeness 9+, no number mismatches, naturalness 7+ |
 | Comfortable | long work with the text is pleasant | Optimized plus naturalness 9+, flow 9+, one terminology |
 | Best | maximum quality, price secondary | highest measured |
+
+Status: tiers are applied by hand from the report today; automating them is
+issue #88 (price list of tiers).
 
 A translator holds a tier only if every document meets the thresholds: the
 guarantee is the worst document, not the average. For each tier the winner
