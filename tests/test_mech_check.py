@@ -81,3 +81,33 @@ def test_english_residue_counts_function_words_not_names_or_units():
     assert count_english_function_words("The rate of the BSA and CMC was high")[0] == 5
     assert count_english_function_words("BSA, CMC, Lys 14.31 kDa, Kokol et al. 2023")[0] == 0
     assert count_cyrillic("\u0442\u0435\u043a\u0441\u0442 BSA")[0] == 5
+
+
+# ---------------------------------------------------------------- regression set from real cases (#108)
+
+M2 = "\u043c\u00b2/\u0433"           # m2/g written with a superscript in Russian
+CM3 = "\u0433/\u0441\u043c\u00b3"    # g/cm3
+MIN1 = "\u043c\u0438\u043d\u207b\u00b9"  # min-1
+
+
+def test_unit_exponents_as_superscripts_are_not_errors():
+    assert check_numbers(seg("s", "area 2.5 m2/g"), seg("s", "area 2.5 " + M2), []) is None
+    assert check_numbers(seg("s", "density 1.6 g/cm3"), seg("s", "density 1.6 " + CM3), []) is None
+    assert check_numbers(seg("s", "at 7000 min\u22121"), seg("s", "at 7000 " + MIN1), []) is None
+
+
+def test_numbers_moved_to_a_neighbour_segment_cancel_out():
+    source = article("SBC between 370 and 1080 mg/g", "equilibrium within 3.3 h")
+    translation = article("SBC between", "370 and 1080 mg/g, equilibrium within 3.3 h")
+    assert [i for i in check_segments(source, translation, []) if i["kind"] == "numbers"] == []
+
+
+def test_real_number_errors_are_still_flagged():
+    source = article("yield 25 percent", "loss 3 percent")
+    translation = article("yield 52 percent", "loss 3 percent")
+    issues = [i for i in check_segments(source, translation, []) if i["kind"] == "numbers"]
+    assert issues and issues[0]["missing"] == ["25"] and issues[0]["extra"] == ["52"]
+
+
+def test_dimension_written_as_word_is_not_an_error():
+    assert check_numbers(seg("s", "highly 3D porous scaffolds"), seg("s", "highly three-dimensional scaffolds"), []) is None
