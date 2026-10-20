@@ -40,10 +40,10 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .chip.on { outline: 2px solid var(--accent); font-weight: 600; }
 .ctl { color: var(--muted); font-size: .9rem; display: flex; gap: 8px; align-items: center; }
 .scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: .88rem; }
-th, td { padding: 7px 5px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table { border-collapse: collapse; width: auto; font-size: .88rem; }
+th, td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
-th { color: var(--muted); font-weight: 600; user-select: none; }
+th { color: var(--text); font-weight: 700; user-select: none; }
 th[draggable="true"] { cursor: grab; }
 th.sortkey { color: var(--accent); }
 th .ord { font-size: .7rem; vertical-align: super; margin-left: 2px; }
@@ -274,7 +274,7 @@ function renderGrid() {
   });
   var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
     return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
-      COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
+      COLS[col].label + "</th>";
   }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
