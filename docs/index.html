@@ -43,7 +43,7 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
-th { color: var(--muted); font-weight: 600; user-select: none; white-space: normal; line-height: 1.2; vertical-align: bottom; }
+th { color: var(--muted); font-weight: 600; user-select: none; }
 th[draggable="true"] { cursor: grab; }
 th.sortkey { color: var(--accent); }
 th .ord { font-size: .7rem; vertical-align: super; margin-left: 2px; }
@@ -150,8 +150,8 @@ var COLS = {
   meaning: { label: "Meaning", scale: 10, dir: -1 }, completeness: { label: "Complete", scale: 10, dir: -1 },
   data: { label: "Data", scale: 10, dir: -1 }, naturalness: { label: "Natural", scale: 10, dir: -1 },
   flow: { label: "Flow", scale: 10, dir: -1 }, clean: { label: "Clean", scale: 10, dir: -1 },
-  total: { label: "Total /60", head: "Total<br>/60", scale: 60, dir: -1 }, floor: { label: "Floor /60", head: "Floor<br>/60", scale: 60, dir: -1 },
-  price: { label: "USD / 1000 words", head: "USD per<br>1000 words", scale: 0, dir: 1 }
+  total: { label: "Total /60", scale: 60, dir: -1 }, floor: { label: "Floor /60", scale: 60, dir: -1 },
+  price: { label: "USD / 1000 words", scale: 0, dir: 1 }
 };
 var FLAG_TYPES = ["untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format"];
 
@@ -274,7 +274,7 @@ function renderGrid() {
   });
   var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
     return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
-      (COLS[col].head || COLS[col].label) + "<span class=\"ord\">" + (i + 1) + "</span></th>";
+      COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
   }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
