@@ -25,6 +25,8 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .lead svg { width: 22px; height: 22px; flex: none; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .best { color: #fff; background: var(--good); border-color: var(--good); margin-left: 6px; }
 .fine li { margin-bottom: 4px; }
+.why { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 11px; font-weight: 600; margin-left: 8px; cursor: help; vertical-align: middle; }
+.why:hover { color: var(--accent); border-color: var(--accent); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
 .contract h2 { font-size: 1rem; margin: 0 0 6px; }
 .contract ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: .92rem; }
@@ -96,7 +98,7 @@ a { color: var(--accent); }
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Under each name you see why it stands above the next one. Click a row for the translator's profile.</p>
+    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Hover the i next to a name, or click the row, to see why it stands above the next one. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -274,6 +276,8 @@ function renderGrid() {
     return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
       COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
   }).join("") + "<th>Holds on every paper</th><th>Remarks by type</th></tr>";
+  state.why = {};
+  stats.forEach(function (s, idx) { state.why[s.code] = decidedBy(stats, idx); });
   var body = stats.map(function (s, idx) {
     var lvl = highestLevel(s);
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
@@ -284,7 +288,7 @@ function renderGrid() {
     }).join("");
     var badge = lvl < 0 ? "<span class=\"badge none\">none</span>" : "<span class=\"badge good\">" + LEVELS[lvl].name + "</span>";
     return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b>" + best +
-      "<div class=\"kv\" style=\"font-size:.78rem\">" + decidedBy(stats, idx) + "</div></td>" + cells +
+      "<span class=\"why\" title=\"" + state.why[s.code] + "\">i</span></td>" + cells +
       "<td>" + badge + "</td><td>" + miniBars(s.flags) + "</td></tr>";
   }).join("");
   var grid = document.getElementById("grid");
@@ -352,6 +356,7 @@ function renderProfile() {
     "<div class=\"kv\">Fluctuation across verdicts <b>+-" + s.swing.toFixed(1) + "%</b></div>" +
     "<div class=\"kv\">Grading its own work as a judge <b>" + bias + "</b></div>" +
     "<div class=\"kv\">List price <b>" + fmtPrice(s.price) + " USD per 1000 words</b></div>" +
+    "<div class=\"kv\">Place in the table <b>" + (state.why[s.code] || "") + "</b></div>" +
     "</div><p class=\"kv\">Remarks by type, " + total + " in total, major " + countMajor(s.code) + "</p>" + rows + "</div>";
 }
 
