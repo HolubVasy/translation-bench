@@ -48,6 +48,7 @@ th[draggable="true"] { cursor: grab; }
 th.sortkey { color: var(--accent); }
 th .ord { font-size: .7rem; vertical-align: super; margin-left: 2px; }
 th.dragover { background: var(--soft); }
+.hint { border-bottom: 1px dotted var(--muted); cursor: help; }
 tr.row { cursor: pointer; }
 tr.row:hover td { background: var(--soft); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; border: 1px solid var(--line); }
@@ -98,7 +99,7 @@ a { color: var(--accent); }
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Click a row for the translator's profile.</p>
+    <p class="help">Hover a column name to see what it means. With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -152,6 +153,17 @@ var COLS = {
   flow: { label: "Flow", scale: 10, dir: -1 }, clean: { label: "Clean", scale: 10, dir: -1 },
   total: { label: "Total /60", scale: 60, dir: -1 }, floor: { label: "Floor /60", scale: 60, dir: -1 },
   price: { label: "USD / 1000 words", scale: 0, dir: 1 }
+};
+var HINTS = {
+  meaning: "Says what the original says. No flipped facts, no wrong links between things.",
+  completeness: "Nothing dropped, nothing added.",
+  data: "Numbers, dates, units and names match the original exactly.",
+  naturalness: "Reads as if written in the target language, not translated word by word.",
+  flow: "Sentences connect, and terms stay the same from start to end.",
+  clean: "No leftovers in the source language, no notes from the translator, layout intact.",
+  total: "Sum of the six scores, averaged over all judges and papers.",
+  floor: "The worst score it got from any judge on any paper. How low it can fall.",
+  price: "What you pay to translate 1000 words, at list price."
 };
 var FLAG_TYPES = ["untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format"];
 
@@ -273,8 +285,8 @@ function renderGrid() {
     lows[col] = COLS[col].dir < 0 ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
   });
   var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
-    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
-      COLS[col].label + "</th>";
+    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\" title=\"" + HINTS[col] + "\">" +
+      "<span class=\"hint\">" + COLS[col].label + "</span></th>";
   }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
