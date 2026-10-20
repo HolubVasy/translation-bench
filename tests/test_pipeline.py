@@ -284,3 +284,21 @@ def test_converter_filters_and_stop_heading():
     assert is_stop_heading("* References:", {"references"})
     assert not is_stop_heading("References were checked by hand", {"references"})
     assert _real_words("Lys Area x 100") == ["Lys", "Area"]
+
+
+def test_validate_judgment_keeps_agreed_flag_type_and_severity():
+    ok = judgment("J1", CODES)
+    ok["flags"] = [{"translator": "M1", "segment": "S1-p1", "criterion": "clean",
+                    "type": "untranslated", "severity": "minor", "quote": "x"}]
+    assert validate_judgment(ok, CODES) == []
+    assert ok["flags"][0]["type"] == "untranslated"
+    assert ok["flags"][0]["severity"] == "minor"
+
+
+def test_validate_judgment_marks_unknown_flag_type_and_severity_unspecified():
+    ok = judgment("J1", CODES)
+    ok["flags"] = [{"translator": "M1", "segment": "S1-p1", "type": "typo", "severity": "huge"},
+                   {"translator": "M1", "segment": "S1-p2"}]
+    assert validate_judgment(ok, CODES) == []
+    assert [f["type"] for f in ok["flags"]] == ["unspecified", "unspecified"]
+    assert [f["severity"] for f in ok["flags"]] == ["unspecified", "unspecified"]
