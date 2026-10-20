@@ -90,8 +90,15 @@ def validate_judgment(result, codes):
     return errors
 
 
+FLAG_TYPES = ("untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format")
+FLAG_SEVERITIES = ("minor", "major")
+UNSPECIFIED = "unspecified"
+
+
 def _validate_flags(result):
-    """flags must be a list of objects; a missing list is normalized to []."""
+    """flags must be a list of objects; a missing list is normalized to [].
+    A type or severity outside the agreed lists is recorded as unspecified:
+    the judge's observation is kept, but nothing is invented for it."""
     flags = result.get("flags")
     if flags is None:
         result["flags"] = []
@@ -100,7 +107,17 @@ def _validate_flags(result):
         return ["flags is not a list"]
     if any(not isinstance(f, dict) for f in flags):
         return ["flags contains a non-object entry"]
+    for flag in flags:
+        _normalize_flag(flag)
     return []
+
+
+def _normalize_flag(flag):
+    """Keep type and severity only when they come from the agreed lists."""
+    if flag.get("type") not in FLAG_TYPES:
+        flag["type"] = UNSPECIFIED
+    if flag.get("severity") not in FLAG_SEVERITIES:
+        flag["severity"] = UNSPECIFIED
 
 
 def _validate_scores(code, row):
