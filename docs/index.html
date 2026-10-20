@@ -314,11 +314,13 @@ function renderGrid() {
 
 function fitTable(grid) {
   var box = grid.parentNode, size = 0.88;
+  grid.style.width = "auto";
   grid.style.fontSize = size + "rem";
   while (grid.scrollWidth > box.clientWidth * 0.96 && size > 0.6) {
     size -= 0.02;
     grid.style.fontSize = size.toFixed(2) + "rem";
   }
+  grid.style.width = "";
 }
 
 function miniBars(flags) {
