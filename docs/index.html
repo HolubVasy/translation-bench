@@ -40,8 +40,8 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .chip.on { outline: 2px solid var(--accent); font-weight: 600; }
 .ctl { color: var(--muted); font-size: .9rem; display: flex; gap: 8px; align-items: center; }
 .scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: .92rem; }
-th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--muted); font-weight: 600; user-select: none; }
 th[draggable="true"] { cursor: grab; }
@@ -151,7 +151,7 @@ var COLS = {
   data: { label: "Data", scale: 10, dir: -1 }, naturalness: { label: "Natural", scale: 10, dir: -1 },
   flow: { label: "Flow", scale: 10, dir: -1 }, clean: { label: "Clean", scale: 10, dir: -1 },
   total: { label: "Total /60", scale: 60, dir: -1 }, floor: { label: "Floor /60", scale: 60, dir: -1 },
-  price: { label: "USD per 1000 words", scale: 0, dir: 1 }
+  price: { label: "USD / 1000 words", scale: 0, dir: 1 }
 };
 var FLAG_TYPES = ["untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format"];
 
@@ -275,19 +275,16 @@ function renderGrid() {
   var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
     return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
       COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
-  }).join("") + "<th>Holds on every paper</th><th>Remarks by type</th></tr>";
+  }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
-    var lvl = highestLevel(s);
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
     var cells = state.order.map(function (col) {
       var v = value(s, col), txt = col === "price" ? fmtPrice(v) : (col === "floor" ? v.toFixed(0) : v.toFixed(1));
       var low = Math.abs(v - lows[col]) < 1e-9 ? " class=\"lowest\"" : "";
       return "<td" + low + ">" + txt + "</td>";
     }).join("");
-    var badge = lvl < 0 ? "<span class=\"badge none\">none</span>" : "<span class=\"badge good\">" + LEVELS[lvl].name + "</span>";
     return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b>" + best +
-      "</td>" + cells +
-      "<td>" + badge + "</td><td>" + miniBars(s.flags) + "</td></tr>";
+      "</td>" + cells + "</tr>";
   }).join("");
   var grid = document.getElementById("grid");
   grid.innerHTML = head + body;
