@@ -40,7 +40,9 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .chip.on { outline: 2px solid var(--accent); font-weight: 600; }
 .ctl { color: var(--muted); font-size: .9rem; display: flex; gap: 8px; align-items: center; }
 .scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: auto; font-size: .88rem; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th:first-child, td:first-child { width: 1%; padding-right: 24px; }
+@media (min-width: 900px) { .scroll { overflow: visible; } }
 th, td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--text); font-weight: 700; user-select: none; }
@@ -48,7 +50,11 @@ th[draggable="true"] { cursor: grab; }
 th.sortkey { color: var(--accent); }
 th .ord { font-size: .7rem; vertical-align: super; margin-left: 2px; }
 th.dragover { background: var(--soft); }
-.hint { border-bottom: 1px dotted var(--muted); cursor: help; }
+th { position: relative; }
+.info { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 10px; font-weight: 700; margin-left: 5px; cursor: pointer; vertical-align: middle; position: relative; outline: none; }
+.info:hover, .info:focus { color: var(--accent); border-color: var(--accent); }
+.tip { display: none; position: absolute; top: 22px; right: -8px; width: 230px; z-index: 20; padding: 10px 12px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: .82rem; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; }
+.info:hover .tip, .info:focus .tip { display: block; }
 tr.row { cursor: pointer; }
 tr.row:hover td { background: var(--soft); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; border: 1px solid var(--line); }
@@ -99,7 +105,7 @@ a { color: var(--accent); }
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">Hover a column name to see what it means. With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Click a row for the translator's profile.</p>
+    <p class="help">Hover or tap the i next to a column name to see what it means. With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -285,8 +291,8 @@ function renderGrid() {
     lows[col] = COLS[col].dir < 0 ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
   });
   var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
-    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\" title=\"" + HINTS[col] + "\">" +
-      "<span class=\"hint\">" + COLS[col].label + "</span></th>";
+    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" + COLS[col].label +
+      "<span class=\"info\" tabindex=\"0\">i<span class=\"tip\">" + HINTS[col] + "</span></span></th>";
   }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
     var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
