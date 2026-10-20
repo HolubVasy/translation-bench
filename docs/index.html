@@ -20,7 +20,11 @@ body { margin: 0; background: var(--bg); color: var(--text);
        font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
 h1 { font-size: 1.7rem; margin: 0 0 6px; }
-.lead { color: var(--muted); margin: 0 0 18px; }
+.lead { list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 6px; }
+.lead li { display: flex; align-items: center; gap: 10px; color: var(--text); }
+.lead svg { width: 22px; height: 22px; flex: none; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.best { color: #fff; background: var(--good); border-color: var(--good); margin-left: 6px; }
+.fine li { margin-bottom: 4px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
 .contract h2 { font-size: 1rem; margin: 0 0 6px; }
 .contract ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: .92rem; }
@@ -71,12 +75,12 @@ a { color: var(--accent); }
 <body>
 <main>
   <h1>Hire a translator by the service you need</h1>
-  <p class="lead">Five AI translators, three scientific-technical papers, three blind judges. Pick the level of service, see who holds it and what it costs.</p>
-
-  <section class="card contract" id="contract">
-    <h2>Terms of this measurement</h2>
-    <ul id="limits"></ul>
-  </section>
+  <ul class="lead">
+    <li><svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="2"/><path d="M12 3v4M9 12h.01M15 12h.01M9 15h6"/></svg>Five AI translators.</li>
+    <li><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg>Three scientific-technical papers.</li>
+    <li><svg viewBox="0 0 24 24"><path d="M12 4v16M6 20h12M5 8h14M5 8l-2 6h4zM19 8l-2 6h4z"/></svg>Three judges who do not know whose translation they read.</li>
+    <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/></svg>Pick the service level, see who holds it and what it costs.</li>
+  </ul>
 
   <div class="tabs">
     <button class="tab on" data-tab="constructor">Constructor</button>
@@ -92,7 +96,7 @@ a { color: var(--accent); }
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor sets how close two values must be to count as equal, in percent of the scale. Click a row for the translator's profile.</p>
+    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor sets how close two values must be to count as equal, in percent of the scale. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -108,6 +112,11 @@ a { color: var(--accent); }
     <div class="price" id="pickPrice"></div>
     <p class="ctl">Document size, words <input type="number" id="docWords" min="100" step="100" value="6000"></p>
     <div id="others" class="help"></div>
+  </section>
+
+  <section class="card contract fine" id="contract">
+    <h2>Fine print</h2>
+    <ul id="limits"></ul>
   </section>
 
   <footer>
@@ -216,6 +225,10 @@ function sameInCorridor(col, a, b) {
 }
 
 function compare(x, y) {
+  if (state.preset >= 0) {
+    var hx = holds(x, state.preset), hy = holds(y, state.preset);
+    if (hx !== hy) { return hx ? -1 : 1; }
+  }
   for (var i = 0; i < state.order.length; i += 1) {
     var col = state.order[i], a = value(x, col), b = value(y, col);
     if (!sameInCorridor(col, a, b)) { return COLS[col].dir * (a - b) > 0 ? 1 : -1; }
@@ -236,15 +249,16 @@ function renderGrid() {
     return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
       COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
   }).join("") + "<th>Holds on every paper</th><th>Remarks by type</th></tr>";
-  var body = stats.map(function (s) {
+  var body = stats.map(function (s, idx) {
     var lvl = highestLevel(s);
+    var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">best fit</span>" : "";
     var cells = state.order.map(function (col) {
       var v = value(s, col), txt = col === "price" ? fmtPrice(v) : (col === "floor" ? v.toFixed(0) : v.toFixed(1));
       var low = Math.abs(v - lows[col]) < 1e-9 ? " class=\"lowest\"" : "";
       return "<td" + low + ">" + txt + "</td>";
     }).join("");
     var badge = lvl < 0 ? "<span class=\"badge none\">none</span>" : "<span class=\"badge good\">" + LEVELS[lvl].name + "</span>";
-    return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b></td>" + cells +
+    return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b>" + best + "</td>" + cells +
       "<td>" + badge + "</td><td>" + miniBars(s.flags) + "</td></tr>";
   }).join("");
   var grid = document.getElementById("grid");
@@ -373,10 +387,17 @@ function start() {
   }).then(function (data) {
     state.session = data[0];
     state.verdicts = data[1];
-    document.getElementById("limits").innerHTML = state.session.limits.map(function (l) { return "<li>" + l + "</li>"; }).join("") +
-      "<li>Judges are checked first on planted errors: " + Object.keys(state.session.judges).map(function (j) {
-        var c = state.session.judges[j]; return c.name + " " + c.calibration.caught + " of " + c.calibration.planted;
-      }).join(", ") + ". Nothing here is a guarantee.</li>";
+    var judgesLine = Object.keys(state.session.judges).map(function (j) {
+      var c = state.session.judges[j]; return c.name + " " + c.calibration.caught + " of " + c.calibration.planted;
+    }).join(", ");
+    document.getElementById("limits").innerHTML = [
+      "Measured on " + state.session.papers.length + " papers in one run. Other kinds of documents may rank differently.",
+      "All six criteria weigh the same.",
+      "Prices are list prices on the measurement day.",
+      "Before judging, each judge had to find planted errors. " + judgesLine + ".",
+      "I built this with Claude, and a Claude model won. Keep that in mind.",
+      "This is a first measurement, not a guarantee."
+    ].map(function (l) { return "<li>" + l + "</li>"; }).join("");
     Object.keys(state.session.translators).forEach(function (code) { state.stats[code] = translatorStats(code); });
     var corridor = document.getElementById("corridor");
     var showCorridor = function () { document.getElementById("corridorVal").textContent = corridor.value + "%"; };
