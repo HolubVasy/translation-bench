@@ -116,10 +116,10 @@ a { color: var(--accent); }
       <b id="levelName"></b>
     </div>
     <p class="reason" id="levelPromise"></p>
+    <p class="ctl">Document size, words <input type="number" id="docWords" min="100" step="100" value="6000"></p>
     <div class="pick" id="pick"></div>
     <div class="reason" id="pickReason"></div>
     <div class="price" id="pickPrice"></div>
-    <p class="ctl">Document size, words <input type="number" id="docWords" min="100" step="100" value="6000"></p>
     <div id="others" class="help"></div>
   </section>
 
@@ -398,6 +398,10 @@ function misses(stat, level) {
   return out;
 }
 
+function priceLine(per1000, words) {
+  return fmtPrice(per1000) + " USD x " + words + " words / 1000 = " + (per1000 * words / 1000).toFixed(2) + " USD";
+}
+
 function renderPresets() {
   var level = Number(document.getElementById("level").value), lvl = LEVELS[level];
   document.getElementById("levelName").textContent = lvl.name;
@@ -410,12 +414,12 @@ function renderPresets() {
     pick.textContent = fit[0].card.name;
     reason.textContent = fit.length === 1 ? "The only translator that holds this level on every paper." :
       "The cheapest of " + fit.length + " translators that hold this level on every paper.";
-    price.textContent = fmtPrice(fit[0].price) + " USD per 1000 words, about " + (fit[0].price * words / 1000).toFixed(2) + " USD for " + words + " words.";
+    price.textContent = priceLine(fit[0].price, words);
   } else {
     var closest = stats.slice().sort(function (a, b) { return misses(a, level).length - misses(b, level).length || b.total - a.total; })[0];
     pick.textContent = "Nobody holds this level on every paper";
     reason.textContent = "Closest: " + closest.card.name + ". Misses: " + misses(closest, level).join("; ") + ".";
-    price.textContent = fmtPrice(closest.price) + " USD per 1000 words, about " + (closest.price * words / 1000).toFixed(2) + " USD for " + words + " words.";
+    price.textContent = priceLine(closest.price, words);
   }
   var rest = fit.slice(1).map(function (s) { return s.card.name + " " + fmtPrice(s.price); });
   document.getElementById("others").textContent = rest.length ? "Also holding this level: " + rest.join(", ") + " USD per 1000 words." : "";
