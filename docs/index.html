@@ -42,6 +42,7 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .scroll { overflow-x: auto; overflow-y: visible; padding-bottom: 110px; margin-bottom: -110px; }
 table { border-collapse: collapse; width: 100%; font-size: .88rem; }
 th:first-child, td:first-child { width: 1%; padding-right: 2.2em; }
+table.measuring, table.measuring th:first-child, table.measuring td:first-child { width: auto; }
 th, td { padding: .55em .6em; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--text); font-weight: 700; user-select: none; }
@@ -314,13 +315,13 @@ function renderGrid() {
 
 function fitTable(grid) {
   var box = grid.parentNode, size = 0.88;
-  grid.style.width = "auto";
+  grid.classList.add("measuring");
   grid.style.fontSize = size + "rem";
   while (grid.scrollWidth > box.clientWidth * 0.96 && size > 0.6) {
     size -= 0.02;
     grid.style.fontSize = size.toFixed(2) + "rem";
   }
-  grid.style.width = "";
+  grid.classList.remove("measuring");
 }
 
 function miniBars(flags) {
