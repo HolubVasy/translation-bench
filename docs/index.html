@@ -91,12 +91,12 @@ a { color: var(--accent); }
     <div class="chips" id="presetChips"></div>
     <div class="chips">
       <label class="ctl">Corridor
-        <input type="range" id="corridor" min="0" max="10" step="1" value="3">
+        <input type="range" id="corridor" min="0" max="20" step="1" value="10">
         <span id="corridorVal"></span>
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor sets how close two values must be to count as equal, in percent of the scale. Click a row for the translator's profile.</p>
+    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Under each name you see which column decided its place. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -218,10 +218,19 @@ function value(stat, col) {
   return stat.crit[col];
 }
 
-function sameInCorridor(col, a, b) {
+function bucket(col, v) {
   var pct = Number(document.getElementById("corridor").value) / 100;
-  if (col === "price") { return Math.abs(a - b) <= pct * Math.max(a, b); }
-  return Math.abs(a - b) <= pct * COLS[col].scale;
+  if (pct === 0) { return v; }
+  if (col === "price") { return Math.floor(Math.log(v) / Math.log(1 + pct)); }
+  return Math.floor(v / (pct * COLS[col].scale));
+}
+
+function decidingColumn(x, y) {
+  for (var i = 0; i < state.order.length; i += 1) {
+    var col = state.order[i];
+    if (bucket(col, value(x, col)) !== bucket(col, value(y, col))) { return col; }
+  }
+  return null;
 }
 
 function compare(x, y) {
@@ -229,11 +238,17 @@ function compare(x, y) {
     var hx = holds(x, state.preset), hy = holds(y, state.preset);
     if (hx !== hy) { return hx ? -1 : 1; }
   }
-  for (var i = 0; i < state.order.length; i += 1) {
-    var col = state.order[i], a = value(x, col), b = value(y, col);
-    if (!sameInCorridor(col, a, b)) { return COLS[col].dir * (a - b) > 0 ? 1 : -1; }
-  }
-  return 0;
+  var col = decidingColumn(x, y);
+  if (!col) { return y.total - x.total; }
+  return COLS[col].dir * (bucket(col, value(x, col)) - bucket(col, value(y, col))) > 0 ? 1 : -1;
+}
+
+function decidedBy(stats, idx) {
+  if (idx === 0) { return "top"; }
+  var prev = stats[idx - 1], cur = stats[idx];
+  if (state.preset >= 0 && holds(prev, state.preset) !== holds(cur, state.preset)) { return "level held"; }
+  var col = decidingColumn(prev, cur);
+  return col ? "by " + COLS[col].label : "tie";
 }
 
 function fmtPrice(v) { return v < 0.01 ? v.toFixed(4) : v.toFixed(3); }
@@ -258,7 +273,8 @@ function renderGrid() {
       return "<td" + low + ">" + txt + "</td>";
     }).join("");
     var badge = lvl < 0 ? "<span class=\"badge none\">none</span>" : "<span class=\"badge good\">" + LEVELS[lvl].name + "</span>";
-    return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b>" + best + "</td>" + cells +
+    return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b>" + best +
+      "<div class=\"kv\" style=\"font-size:.78rem\">" + decidedBy(stats, idx) + "</div></td>" + cells +
       "<td>" + badge + "</td><td>" + miniBars(s.flags) + "</td></tr>";
   }).join("");
   var grid = document.getElementById("grid");
