@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Translator Showcase: hire a translator by the service you need</title>
+<style>
+:root {
+  --bg: #f7f8fa; --card: #ffffff; --text: #1d2330; --muted: #5f6b7a; --line: #dfe3ea;
+  --accent: #1d68e7; --good: #15803d; --bad: #b91c1c; --soft: #eef3fd; --gold: #c99212;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #11151c; --card: #1a2029; --text: #e6e9ef; --muted: #9aa5b4; --line: #2c3440;
+          --accent: #6ea2ff; --good: #4ade80; --bad: #f87171; --soft: #1f2a3d; --gold: #e5b437;
+          color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 1.7rem; margin: 0 0 6px; }
+.lead { color: var(--muted); margin: 0 0 18px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.contract h2 { font-size: 1rem; margin: 0 0 6px; }
+.contract ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: .92rem; }
+.tabs { display: flex; gap: 8px; margin: 8px 0 12px; }
+.tab { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 8px 14px;
+       border-radius: 999px; cursor: pointer; font-size: .95rem; }
+.tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: var(--soft); color: var(--text); padding: 5px 12px;
+        border-radius: 999px; cursor: pointer; font-size: .9rem; }
+.chip.on { outline: 2px solid var(--accent); font-weight: 600; }
+.ctl { color: var(--muted); font-size: .9rem; display: flex; gap: 8px; align-items: center; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: .92rem; }
+th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; user-select: none; }
+th[draggable="true"] { cursor: grab; }
+th.sortkey { color: var(--accent); }
+th .ord { font-size: .7rem; vertical-align: super; margin-left: 2px; }
+th.dragover { background: var(--soft); }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: var(--soft); }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; border: 1px solid var(--line); }
+.badge.good { color: var(--good); border-color: var(--good); }
+.badge.none { color: var(--muted); }
+.lowest { color: var(--bad); font-weight: 600; }
+.help { color: var(--muted); font-size: .85rem; margin-top: 8px; }
+.bars { display: inline-flex; gap: 2px; vertical-align: middle; }
+.bars span { display: inline-block; width: 8px; background: var(--accent); opacity: .75; border-radius: 2px; }
+.profile h3 { margin: 0 0 6px; }
+.profile .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.kv { color: var(--muted); font-size: .9rem; }
+.kv b { color: var(--text); }
+.flagrow { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
+.flagrow .bar { height: 10px; background: var(--accent); border-radius: 3px; }
+.level { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.level input[type=range] { width: 260px; }
+.pick { font-size: 1.3rem; font-weight: 700; margin: 10px 0 4px; }
+.reason { color: var(--muted); }
+.price { font-size: 1.1rem; margin-top: 6px; }
+input[type=number] { width: 110px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px;
+                     background: var(--card); color: var(--text); }
+footer { color: var(--muted); font-size: .85rem; margin-top: 24px; }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hire a translator by the service you need</h1>
+  <p class="lead">Five AI translators, three scientific-technical papers, three blind judges. Pick the level of service, see who holds it and what it costs.</p>
+
+  <section class="card contract" id="contract">
+    <h2>Terms of this measurement</h2>
+    <ul id="limits"></ul>
+  </section>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="constructor">Constructor</button>
+    <button class="tab" data-tab="presets">Presets</button>
+  </div>
+
+  <section class="card" id="tab-constructor">
+    <div class="chips" id="presetChips"></div>
+    <div class="chips">
+      <label class="ctl">Corridor
+        <input type="range" id="corridor" min="0" max="10" step="1" value="3">
+        <span id="corridorVal"></span>
+      </label>
+    </div>
+    <div class="scroll"><table id="grid"></table></div>
+    <p class="help">Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor sets how close two values must be to count as equal, in percent of the scale. Click a row for the translator's profile.</p>
+    <div id="profile"></div>
+  </section>
+
+  <section class="card" id="tab-presets" hidden>
+    <div class="level">
+      <span>Level of service</span>
+      <input type="range" id="level" min="0" max="2" step="1" value="1">
+      <b id="levelName"></b>
+    </div>
+    <p class="reason" id="levelPromise"></p>
+    <div class="pick" id="pick"></div>
+    <div class="reason" id="pickReason"></div>
+    <div class="price" id="pickPrice"></div>
+    <p class="ctl">Document size, words <input type="number" id="docWords" min="100" step="100" value="6000"></p>
+    <div id="others" class="help"></div>
+  </section>
+
+  <footer>
+    Session <span id="sessionId"></span>. Raw protocol: <a id="protoLink" href="#">session files</a>.
+    Method and code: <a href="https://github.com/HolubVasy/translation-bench">github.com/HolubVasy/translation-bench</a>.
+  </footer>
+</main>
+
+<script>
+"use strict";
+
+var LEVELS = [
+  { key: "content", name: "Content", promise: "Understand what the text is about.",
+    rule: function (m) { return m.completeness >= 8 && m.meaning >= 7; },
+    order: ["price", "meaning", "completeness", "data", "naturalness", "flow", "clean", "total", "floor"] },
+  { key: "referable", name: "Referable", promise: "Does not lie, can be cited. May read rough.",
+    rule: function (m) { return m.meaning >= 9 && m.completeness >= 9 && m.data >= 9 && m.naturalness >= 7; },
+    order: ["meaning", "data", "completeness", "price", "naturalness", "flow", "clean", "total", "floor"] },
+  { key: "comfortable", name: "Comfortable", promise: "Referable, and reads comfortably for daily work.",
+    rule: function (m) { return m.meaning >= 9 && m.completeness >= 9 && m.data >= 9 && m.naturalness >= 9 && m.flow >= 9; },
+    order: ["naturalness", "flow", "meaning", "data", "price", "completeness", "clean", "total", "floor"] }
+];
+var THRESHOLDS = [
+  { completeness: 8, meaning: 7 },
+  { meaning: 9, completeness: 9, data: 9, naturalness: 7 },
+  { meaning: 9, completeness: 9, data: 9, naturalness: 9, flow: 9 }
+];
+var COLS = {
+  meaning: { label: "Meaning", scale: 10, dir: -1 }, completeness: { label: "Complete", scale: 10, dir: -1 },
+  data: { label: "Data", scale: 10, dir: -1 }, naturalness: { label: "Natural", scale: 10, dir: -1 },
+  flow: { label: "Flow", scale: 10, dir: -1 }, clean: { label: "Clean", scale: 10, dir: -1 },
+  total: { label: "Total /60", scale: 60, dir: -1 }, floor: { label: "Floor /60", scale: 60, dir: -1 },
+  price: { label: "USD per 1000 words", scale: 0, dir: 1 }
+};
+var FLAG_TYPES = ["untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format"];
+
+var state = { session: null, verdicts: [], stats: {}, order: LEVELS[1].order.slice(), preset: 1, selected: null };
+
+function mean(xs) { return xs.reduce(function (a, b) { return a + b; }, 0) / xs.length; }
+
+function translatorStats(code) {
+  var s = state.session, rows = state.verdicts.filter(function (r) { return r.translator === code; });
+  var crit = {};
+  s.criteria.forEach(function (c) { crit[c] = mean(rows.map(function (r) { return r.scores[c]; })); });
+  var totals = rows.map(function (r) { return s.criteria.reduce(function (a, c) { return a + r.scores[c]; }, 0); });
+  var avg = mean(totals);
+  var perPaper = {};
+  s.papers.forEach(function (p) {
+    var pr = rows.filter(function (r) { return r.paper === p.id; }), m = {};
+    s.criteria.forEach(function (c) { m[c] = mean(pr.map(function (r) { return r.scores[c]; })); });
+    perPaper[p.id] = m;
+  });
+  return { code: code, card: s.translators[code], crit: crit, total: avg, floor: Math.min.apply(null, totals),
+           swing: mean(totals.map(function (t) { return Math.abs(t - avg); })) / 60 * 100,
+           perPaper: perPaper, price: pricePer1000(code), flags: flagCounts(rows), selfBias: selfBias(code) };
+}
+
+function pricePer1000(code) {
+  var t = state.session.translators[code], usd = 0, words = 0;
+  state.session.papers.forEach(function (p) {
+    var tk = t.tokens[p.id];
+    usd += (tk.input * t.list_price_per_mtok.input + tk.output * t.list_price_per_mtok.output) / 1e6;
+    words += p.words;
+  });
+  return usd / words * 1000;
+}
+
+function flagCounts(rows) {
+  var c = {};
+  FLAG_TYPES.forEach(function (t) { c[t] = 0; });
+  rows.forEach(function (r) { r.flags.forEach(function (f) { if (c[f.type] !== undefined) { c[f.type] += 1; } }); });
+  return c;
+}
+
+function selfBias(code) {
+  var model = state.session.translators[code].model, judge = null;
+  Object.keys(state.session.judges).forEach(function (j) { if (state.session.judges[j].model === model) { judge = j; } });
+  if (!judge) { return null; }
+  var crit = state.session.criteria, sum = function (r) { return crit.reduce(function (a, c) { return a + r.scores[c]; }, 0); };
+  var own = state.verdicts.filter(function (r) { return r.translator === code && r.judge === judge; }).map(sum);
+  var other = state.verdicts.filter(function (r) { return r.translator === code && r.judge !== judge; }).map(sum);
+  return (mean(own) / mean(other) - 1) * 100;
+}
+
+function holds(stat, level) {
+  return state.session.papers.every(function (p) { return LEVELS[level].rule(stat.perPaper[p.id]); });
+}
+
+function highestLevel(stat) {
+  var best = -1;
+  LEVELS.forEach(function (l, i) { if (holds(stat, i)) { best = i; } });
+  return best;
+}
+
+function value(stat, col) {
+  if (col === "total") { return stat.total; }
+  if (col === "floor") { return stat.floor; }
+  if (col === "price") { return stat.price; }
+  return stat.crit[col];
+}
+
+function sameInCorridor(col, a, b) {
+  var pct = Number(document.getElementById("corridor").value) / 100;
+  if (col === "price") { return Math.abs(a - b) <= pct * Math.max(a, b); }
+  return Math.abs(a - b) <= pct * COLS[col].scale;
+}
+
+function compare(x, y) {
+  for (var i = 0; i < state.order.length; i += 1) {
+    var col = state.order[i], a = value(x, col), b = value(y, col);
+    if (!sameInCorridor(col, a, b)) { return COLS[col].dir * (a - b) > 0 ? 1 : -1; }
+  }
+  return 0;
+}
+
+function fmtPrice(v) { return v < 0.01 ? v.toFixed(4) : v.toFixed(3); }
+
+function renderGrid() {
+  var stats = Object.keys(state.stats).map(function (k) { return state.stats[k]; }).sort(compare);
+  var lows = {};
+  state.order.forEach(function (col) {
+    var vals = stats.map(function (s) { return value(s, col); });
+    lows[col] = COLS[col].dir < 0 ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
+  });
+  var head = "<tr><th>Translator</th>" + state.order.map(function (col, i) {
+    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" +
+      COLS[col].label + "<span class=\"ord\">" + (i + 1) + "</span></th>";
+  }).join("") + "<th>Holds on every paper</th><th>Remarks by type</th></tr>";
+  var body = stats.map(function (s) {
+    var lvl = highestLevel(s);
+    var cells = state.order.map(function (col) {
+      var v = value(s, col), txt = col === "price" ? fmtPrice(v) : (col === "floor" ? v.toFixed(0) : v.toFixed(1));
+      var low = Math.abs(v - lows[col]) < 1e-9 ? " class=\"lowest\"" : "";
+      return "<td" + low + ">" + txt + "</td>";
+    }).join("");
+    var badge = lvl < 0 ? "<span class=\"badge none\">none</span>" : "<span class=\"badge good\">" + LEVELS[lvl].name + "</span>";
+    return "<tr class=\"row\" data-code=\"" + s.code + "\"><td><b>" + s.card.name + "</b></td>" + cells +
+      "<td>" + badge + "</td><td>" + miniBars(s.flags) + "</td></tr>";
+  }).join("");
+  var grid = document.getElementById("grid");
+  grid.innerHTML = head + body;
+  bindDrag(grid);
+  Array.prototype.forEach.call(grid.querySelectorAll("tr.row"), function (tr) {
+    tr.addEventListener("click", function () { state.selected = tr.dataset.code; renderProfile(); });
+  });
+}
+
+function miniBars(flags) {
+  var max = Math.max.apply(null, FLAG_TYPES.map(function (t) { return flags[t]; }).concat([1]));
+  return "<span class=\"bars\" title=\"" + FLAG_TYPES.map(function (t) { return t + " " + flags[t]; }).join(", ") + "\">" +
+    FLAG_TYPES.map(function (t) { return "<span style=\"height:" + (2 + 18 * flags[t] / max) + "px\"></span>"; }).join("") + "</span>";
+}
+
+function bindDrag(grid) {
+  var dragged = null;
+  Array.prototype.forEach.call(grid.querySelectorAll("th[draggable]"), function (th) {
+    th.addEventListener("dragstart", function (e) { dragged = th.dataset.col; e.dataTransfer.effectAllowed = "move"; });
+    th.addEventListener("dragover", function (e) { e.preventDefault(); th.classList.add("dragover"); });
+    th.addEventListener("dragleave", function () { th.classList.remove("dragover"); });
+    th.addEventListener("drop", function (e) {
+      e.preventDefault();
+      var target = th.dataset.col;
+      if (!dragged || dragged === target) { return; }
+      var order = state.order.filter(function (c) { return c !== dragged; });
+      order.splice(order.indexOf(target), 0, dragged);
+      state.order = order;
+      state.preset = -1;
+      renderChips();
+      renderGrid();
+    });
+  });
+}
+
+function renderChips() {
+  var box = document.getElementById("presetChips");
+  box.innerHTML = "<span class=\"ctl\">Preset</span>" + LEVELS.map(function (l, i) {
+    return "<button class=\"chip" + (state.preset === i ? " on" : "") + "\" data-i=\"" + i + "\">" + l.name + "</button>";
+  }).join("") + "<span class=\"chip" + (state.preset === -1 ? " on" : "") + "\">Custom</span>";
+  Array.prototype.forEach.call(box.querySelectorAll("button.chip"), function (b) {
+    b.addEventListener("click", function () {
+      state.preset = Number(b.dataset.i);
+      state.order = LEVELS[state.preset].order.slice();
+      renderChips();
+      renderGrid();
+    });
+  });
+}
+
+function renderProfile() {
+  var s = state.stats[state.selected];
+  if (!s) { return; }
+  var max = Math.max.apply(null, FLAG_TYPES.map(function (t) { return s.flags[t]; }).concat([1]));
+  var total = FLAG_TYPES.reduce(function (a, t) { return a + s.flags[t]; }, 0);
+  var rows = FLAG_TYPES.filter(function (t) { return s.flags[t] > 0; }).map(function (t) {
+    return "<div class=\"flagrow\"><span style=\"width:96px\">" + t + "</span><span class=\"bar\" style=\"width:" +
+      (6 + 160 * s.flags[t] / max) + "px\"></span><span>" + s.flags[t] + "</span></div>";
+  }).join("");
+  var bias = s.selfBias === null ? "not a judge" : (s.selfBias >= 0 ? "+" : "") + s.selfBias.toFixed(0) + "% versus the other judges";
+  document.getElementById("profile").innerHTML =
+    "<div class=\"card profile\"><h3>" + s.card.name + " <span class=\"kv\">" + s.card.vendor + "</span></h3><div class=\"grid\">" +
+    "<div class=\"kv\">Floor, lowest verdict <b>" + s.floor.toFixed(0) + " of 60</b></div>" +
+    "<div class=\"kv\">Fluctuation across verdicts <b>+-" + s.swing.toFixed(1) + "%</b></div>" +
+    "<div class=\"kv\">Grading its own work as a judge <b>" + bias + "</b></div>" +
+    "<div class=\"kv\">List price <b>" + fmtPrice(s.price) + " USD per 1000 words</b></div>" +
+    "</div><p class=\"kv\">Remarks by type, " + total + " in total, major " + countMajor(s.code) + "</p>" + rows + "</div>";
+}
+
+function countMajor(code) {
+  return state.verdicts.filter(function (r) { return r.translator === code; })
+    .reduce(function (a, r) { return a + r.flags.filter(function (f) { return f.severity === "major"; }).length; }, 0);
+}
+
+function misses(stat, level) {
+  var out = [];
+  state.session.papers.forEach(function (p) {
+    var m = stat.perPaper[p.id], th = THRESHOLDS[level];
+    Object.keys(th).forEach(function (c) { if (m[c] < th[c]) { out.push(c + " " + m[c].toFixed(1) + " on paper " + p.id + " (needs " + th[c] + ")"); } });
+  });
+  return out;
+}
+
+function renderPresets() {
+  var level = Number(document.getElementById("level").value), lvl = LEVELS[level];
+  document.getElementById("levelName").textContent = lvl.name;
+  document.getElementById("levelPromise").textContent = lvl.promise + " A translator qualifies only if it holds the level on every paper.";
+  var stats = Object.keys(state.stats).map(function (k) { return state.stats[k]; });
+  var fit = stats.filter(function (s) { return holds(s, level); }).sort(function (a, b) { return a.price - b.price; });
+  var words = Math.max(0, Number(document.getElementById("docWords").value) || 0);
+  var pick = document.getElementById("pick"), reason = document.getElementById("pickReason"), price = document.getElementById("pickPrice");
+  if (fit.length) {
+    pick.textContent = fit[0].card.name;
+    reason.textContent = fit.length === 1 ? "The only translator that holds this level on every paper." :
+      "The cheapest of " + fit.length + " translators that hold this level on every paper.";
+    price.textContent = fmtPrice(fit[0].price) + " USD per 1000 words, about " + (fit[0].price * words / 1000).toFixed(2) + " USD for " + words + " words.";
+  } else {
+    var closest = stats.slice().sort(function (a, b) { return misses(a, level).length - misses(b, level).length || b.total - a.total; })[0];
+    pick.textContent = "Nobody holds this level on every paper";
+    reason.textContent = "Closest: " + closest.card.name + ". Misses: " + misses(closest, level).join("; ") + ".";
+    price.textContent = fmtPrice(closest.price) + " USD per 1000 words, about " + (closest.price * words / 1000).toFixed(2) + " USD for " + words + " words.";
+  }
+  var rest = fit.slice(1).map(function (s) { return s.card.name + " " + fmtPrice(s.price); });
+  document.getElementById("others").textContent = rest.length ? "Also holding this level: " + rest.join(", ") + " USD per 1000 words." : "";
+}
+
+function bindTabs() {
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+    b.addEventListener("click", function () {
+      Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (x) { x.classList.toggle("on", x === b); });
+      document.getElementById("tab-constructor").hidden = b.dataset.tab !== "constructor";
+      document.getElementById("tab-presets").hidden = b.dataset.tab !== "presets";
+      if (b.dataset.tab === "presets") { renderPresets(); }
+    });
+  });
+}
+
+function start() {
+  fetch("data/sessions/index.json").then(function (r) { return r.json(); }).then(function (index) {
+    var base = "data/sessions/" + index.latest + "/";
+    document.getElementById("sessionId").textContent = index.latest;
+    document.getElementById("protoLink").href = base + "session.json";
+    return Promise.all([fetch(base + "session.json").then(function (r) { return r.json(); }),
+                        fetch(base + "verdicts.json").then(function (r) { return r.json(); })]);
+  }).then(function (data) {
+    state.session = data[0];
+    state.verdicts = data[1];
+    document.getElementById("limits").innerHTML = state.session.limits.map(function (l) { return "<li>" + l + "</li>"; }).join("") +
+      "<li>Judges are checked first on planted errors: " + Object.keys(state.session.judges).map(function (j) {
+        var c = state.session.judges[j]; return c.name + " " + c.calibration.caught + " of " + c.calibration.planted;
+      }).join(", ") + ". Nothing here is a guarantee.</li>";
+    Object.keys(state.session.translators).forEach(function (code) { state.stats[code] = translatorStats(code); });
+    var corridor = document.getElementById("corridor");
+    var showCorridor = function () { document.getElementById("corridorVal").textContent = corridor.value + "%"; };
+    corridor.addEventListener("input", function () { showCorridor(); renderGrid(); });
+    showCorridor();
+    document.getElementById("level").addEventListener("input", renderPresets);
+    document.getElementById("docWords").addEventListener("input", renderPresets);
+    bindTabs();
+    renderChips();
+    renderGrid();
+  });
+}
+
+start();
+</script>
+</body>
+</html>
