@@ -40,10 +40,10 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .chip.on { outline: 2px solid var(--accent); font-weight: 600; }
 .ctl { color: var(--muted); font-size: .9rem; display: flex; gap: 8px; align-items: center; }
 .scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-th:first-child, td:first-child { width: 1%; padding-right: 24px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th:first-child, td:first-child { width: 1%; padding-right: 16px; }
 @media (min-width: 900px) { .scroll { overflow: visible; } }
-th, td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--text); font-weight: 700; user-select: none; }
 th[draggable="true"] { cursor: grab; }
@@ -53,7 +53,7 @@ th.dragover { background: var(--soft); }
 th { position: relative; }
 .info { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 10px; font-weight: 700; margin-left: 5px; cursor: pointer; vertical-align: middle; position: relative; outline: none; }
 .info:hover, .info:focus { color: var(--accent); border-color: var(--accent); }
-.tip { display: none; position: absolute; top: 22px; right: -8px; width: 230px; z-index: 20; padding: 10px 12px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: .82rem; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; }
+.tip { display: none; position: absolute; top: 22px; right: 0; width: 230px; z-index: 20; padding: 10px 12px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: .82rem; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; }
 .info:hover .tip, .info:focus .tip { display: block; }
 tr.row { cursor: pointer; }
 tr.row:hover td { background: var(--soft); }
