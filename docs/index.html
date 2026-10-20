@@ -24,6 +24,7 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .lead li { display: flex; align-items: center; gap: 10px; color: var(--text); }
 .lead svg { width: 22px; height: 22px; flex: none; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .best { color: #fff; background: var(--good); border-color: var(--good); margin-left: 6px; }
+.closest { color: var(--muted); border-color: var(--muted); margin-left: 6px; }
 .fine li { margin-bottom: 4px; }
 .why { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 11px; font-weight: 600; margin-left: 8px; cursor: help; vertical-align: middle; }
 .why:hover { color: var(--accent); border-color: var(--accent); }
@@ -295,7 +296,11 @@ function renderGrid() {
       "<span class=\"info\" tabindex=\"0\">i<span class=\"tip\">" + HINTS[col] + "</span></span></th>";
   }).join("") + "</tr>";
   var body = stats.map(function (s, idx) {
-    var best = idx === 0 && state.preset >= 0 && holds(s, state.preset) ? "<span class=\"badge best\">Top pick</span>" : "";
+    var best = "";
+    if (idx === 0 && state.preset >= 0) {
+      best = holds(s, state.preset) ? "<span class=\"badge best\">Top pick</span>" :
+        "<span class=\"badge closest\" title=\"Nobody holds this level on every paper. This one comes closest.\">Closest</span>";
+    }
     var cells = state.order.map(function (col) {
       var v = value(s, col), txt = col === "price" ? fmtPrice(v) : (col === "floor" ? v.toFixed(0) : v.toFixed(1));
       var low = Math.abs(v - lows[col]) < 1e-9 ? " class=\"lowest\"" : "";
