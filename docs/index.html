@@ -96,7 +96,7 @@ a { color: var(--accent); }
       </label>
     </div>
     <div class="scroll"><table id="grid"></table></div>
-    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Under each name you see which column decided its place. Click a row for the translator's profile.</p>
+    <p class="help">With a preset, translators that hold that level on every paper come first. Drag column headers to reorder them. The order of the columns from left to right is the sort order: the first column decides, and each next column sorts only among translators the previous one sees as equal. The corridor groups values into steps, in percent of the scale: values in the same step count as equal and the next column decides. Under each name you see why it stands above the next one. Click a row for the translator's profile.</p>
     <div id="profile"></div>
   </section>
 
@@ -243,12 +243,22 @@ function compare(x, y) {
   return COLS[col].dir * (bucket(col, value(x, col)) - bucket(col, value(y, col))) > 0 ? 1 : -1;
 }
 
+function shown(col, v) {
+  if (col === "price") { return fmtPrice(v); }
+  return col === "floor" ? v.toFixed(0) : v.toFixed(1);
+}
+
 function decidedBy(stats, idx) {
-  if (idx === 0) { return "top"; }
-  var prev = stats[idx - 1], cur = stats[idx];
-  if (state.preset >= 0 && holds(prev, state.preset) !== holds(cur, state.preset)) { return "level held"; }
-  var col = decidingColumn(prev, cur);
-  return col ? "by " + COLS[col].label : "tie";
+  if (idx === stats.length - 1) { return "last"; }
+  var cur = stats[idx], next = stats[idx + 1], ahead = "ahead of " + next.card.name;
+  if (state.preset >= 0 && holds(cur, state.preset) !== holds(next, state.preset)) {
+    return ahead + ": holds the level on every paper";
+  }
+  var col = decidingColumn(cur, next);
+  if (!col) { return ahead + ": equal in every column, higher total"; }
+  var ties = state.order.slice(0, state.order.indexOf(col)).map(function (c) { return COLS[c].label; });
+  var why = ahead + ": " + COLS[col].label + " " + shown(col, value(cur, col)) + " vs " + shown(col, value(next, col));
+  return ties.length ? why + ", after " + ties.join(", ") + " counted as equal" : why;
 }
 
 function fmtPrice(v) { return v < 0.01 ? v.toFixed(4) : v.toFixed(3); }
