@@ -2,29 +2,31 @@
 # Verify exact OpenRouter model ids at openrouter.ai before the first run.
 
 translators:
-  M1: google/gemini-3.5-flash
   M2: google/gemini-4-argon
-  M3: anthropic/claude-haiku-5.5
-  M4: anthropic/claude-sonnet-5.5
   M5: openai/gpt-6-luna-pro
+  M6: google/gemini-3.8-flash
+  M7: openai/gpt-6-sol-pro
+  M8: anthropic/claude-opus-5.5
 
 judges:
   J1: anthropic/claude-opus-5.5   # swap to anthropic/claude-fable-5.1 if preferred
-  J2: openai/gpt-6-astra-pro
+  # J2: openai/gpt-6-astra-pro   # off: one judgment cost 4.58 USD (issue #53)
   J3: google/gemini-4-argon       # also a participant (M2); aggregate.py reports its self-scores separately
+  J4: openai/gpt-6-luna-pro       # OpenAI voice; replaced by openai/gpt-6-sol if it fails calibration
 
 # USD per 1M tokens, input/output. Used only for the cost column in the report.
 prices:
-  M1: {input: 1.50, output: 9.00}
-  M2: {input: 2.00, output: 10.00}
-  M3: {input: 0.10, output: 0.50}
-  M4: {input: 2.00, output: 10.00}
+  M2: {input: 2.00, output: 10.00}   # launch discount until 30 Nov 2026, list price 4.00 / 20.00
   M5: {input: 0.10, output: 0.50}
+  M6: {input: 0.83, output: 4.12}
+  M7: {input: 2.00, output: 10.00}
+  M8: {input: 4.00, output: 20.00}
 
 judge_prices:
   J1: {input: 4.00, output: 20.00}
-  J2: {input: 10.00, output: 50.00}
+  # J2: {input: 10.00, output: 50.00}   # Astra Pro, off
   J3: {input: 2.00, output: 10.00}
+  J4: {input: 0.10, output: 0.50}
 
 # Judge calibration: a copy of one real translation with planted errors, one
 # per kind listed below (src/calibrate.py PLANTERS). A judge flagging fewer
@@ -32,8 +34,8 @@ judge_prices:
 calibration:
   enabled: true
   article: a1
-  base_translator: M4
-  label: M6          # neutral blind label, must not clash with a translator code
+  base_translator: M2
+  label: M9          # neutral blind label, must not clash with a translator code
   min_caught: 3
   kinds: [negation, number, omission, modality, quantifier]
 

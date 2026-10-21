@@ -15,7 +15,7 @@ Scale anchors: 10 flawless, 8 minor issues, 5 noticeable errors but meaning inta
 
 Also rank all translations from best to worst overall.
 
-If you notice a specific violation (lost negation, broken number, wrong name), add it to "flags" with the translator label, the segment id and a short quote. Empty list if none.
+For every specific violation you notice, add one entry to "flags" with the translator label, the segment id, the criterion it hurts, its type, its severity and a short quote. type is exactly one of: untranslated (a fragment left in the source language: month, unit, name, term), number (a number, unit or date changed or lost), meaning (meaning distorted: flipped negation, wrong relation), omission (content missing), addition (content added that is not in the source), terminology (wrong or inconsistent term), style (unnatural phrasing or broken flow), format (broken structure: headings, lists, markup). severity is exactly one of: minor, major. Empty list if none.
 
 Return a single valid JSON object, no markdown fences, no text outside JSON. Use exactly these values: "article": "$article_id", "judge": "$judge_code".
 
@@ -29,7 +29,7 @@ Output format:
 $scores_stub
   },
   "flags": [
-    {"translator": "M1", "segment": "S2-p3", "criterion": "data", "quote": "..."}
+    {"translator": "M1", "segment": "S2-p3", "criterion": "data", "type": "number", "severity": "major", "quote": "..."}
   ],
   "verdict": "2-3 sentences, strongest and weakest translation and why"
 }

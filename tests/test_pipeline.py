@@ -289,3 +289,21 @@ def test_converter_filters_and_stop_heading():
 def test_assemble_strips_xml_invalid_control_characters():
     from src.assemble import xml_safe
     assert xml_safe("a\x00b\x07c\x0bd\ttab\nline") == "abcd\ttab\nline"
+
+
+def test_validate_judgment_keeps_agreed_flag_type_and_severity():
+    ok = judgment("J1", CODES)
+    ok["flags"] = [{"translator": "M1", "segment": "S1-p1", "criterion": "clean",
+                    "type": "untranslated", "severity": "minor", "quote": "x"}]
+    assert validate_judgment(ok, CODES) == []
+    assert ok["flags"][0]["type"] == "untranslated"
+    assert ok["flags"][0]["severity"] == "minor"
+
+
+def test_validate_judgment_marks_unknown_flag_type_and_severity_unspecified():
+    ok = judgment("J1", CODES)
+    ok["flags"] = [{"translator": "M1", "segment": "S1-p1", "type": "typo", "severity": "huge"},
+                   {"translator": "M1", "segment": "S1-p2"}]
+    assert validate_judgment(ok, CODES) == []
+    assert [f["type"] for f in ok["flags"]] == ["unspecified", "unspecified"]
+    assert [f["severity"] for f in ok["flags"]] == ["unspecified", "unspecified"]

@@ -1,0 +1,1765 @@
+[
+ {
+  "paper": "A",
+  "judge": "J1",
+  "translator": "M6",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J1",
+  "translator": "M2",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "terminology",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J1",
+  "translator": "M7",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 8.0,
+   "naturalness": 7.0,
+   "flow": 8.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J1",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": []
+ },
+ {
+  "paper": "A",
+  "judge": "J1",
+  "translator": "M5",
+  "scores": {
+   "meaning": 7.0,
+   "completeness": 9.0,
+   "data": 8.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "completeness",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J3",
+  "translator": "M2",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 10.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J3",
+  "translator": "M6",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J3",
+  "translator": "M8",
+  "scores": {
+   "meaning": 10.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 10.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J3",
+  "translator": "M5",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 8.0,
+   "flow": 7.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "flow",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J3",
+  "translator": "M7",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J4",
+  "translator": "M2",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J4",
+  "translator": "M6",
+  "scores": {
+   "meaning": 7.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J4",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J4",
+  "translator": "M5",
+  "scores": {
+   "meaning": 7.0,
+   "completeness": 8.0,
+   "data": 8.0,
+   "naturalness": 6.0,
+   "flow": 6.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "A",
+  "judge": "J4",
+  "translator": "M7",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 7.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J1",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 10.0
+  },
+  "flags": [
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J1",
+  "translator": "M7",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 7.0,
+   "flow": 8.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J1",
+  "translator": "M5",
+  "scores": {
+   "meaning": 6.0,
+   "completeness": 8.0,
+   "data": 9.0,
+   "naturalness": 6.0,
+   "flow": 7.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "completeness",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J1",
+  "translator": "M2",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 8.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "completeness",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J1",
+  "translator": "M6",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 7.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "completeness",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J3",
+  "translator": "M6",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "completeness",
+    "type": "omission",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J3",
+  "translator": "M5",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J3",
+  "translator": "M8",
+  "scores": {
+   "meaning": 10.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J3",
+  "translator": "M7",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 7.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J3",
+  "translator": "M2",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J4",
+  "translator": "M7",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 7.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 7.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "major"
+   },
+   {
+    "criterion": "data",
+    "type": "number",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J4",
+  "translator": "M5",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 8.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "major"
+   },
+   {
+    "criterion": "data",
+    "type": "number",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "omission",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J4",
+  "translator": "M2",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 7.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "flow",
+    "type": "format",
+    "severity": "major"
+   },
+   {
+    "criterion": "completeness",
+    "type": "addition",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J4",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "data",
+    "type": "number",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "B",
+  "judge": "J4",
+  "translator": "M6",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "data",
+    "type": "number",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "omission",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J1",
+  "translator": "M7",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 7.0,
+   "flow": 9.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J1",
+  "translator": "M2",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "addition",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J1",
+  "translator": "M6",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J1",
+  "translator": "M5",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 9.0,
+   "data": 8.0,
+   "naturalness": 7.0,
+   "flow": 7.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "flow",
+    "type": "style",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "format",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J1",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "naturalness",
+    "type": "style",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J3",
+  "translator": "M8",
+  "scores": {
+   "meaning": 10.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 10.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J3",
+  "translator": "M6",
+  "scores": {
+   "meaning": 10.0,
+   "completeness": 9.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 7.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J3",
+  "translator": "M5",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 9.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "completeness",
+    "type": "omission",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "flow",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J3",
+  "translator": "M2",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J3",
+  "translator": "M7",
+  "scores": {
+   "meaning": 10.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J4",
+  "translator": "M5",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 10.0,
+   "naturalness": 9.0,
+   "flow": 9.0,
+   "clean": 10.0
+  },
+  "flags": []
+ },
+ {
+  "paper": "C",
+  "judge": "J4",
+  "translator": "M7",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 6.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J4",
+  "translator": "M2",
+  "scores": {
+   "meaning": 8.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 9.0
+  },
+  "flags": [
+   {
+    "criterion": "meaning",
+    "type": "meaning",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J4",
+  "translator": "M6",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 8.0,
+   "naturalness": 8.0,
+   "flow": 8.0,
+   "clean": 5.0
+  },
+  "flags": [
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "data",
+    "type": "number",
+    "severity": "major"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ },
+ {
+  "paper": "C",
+  "judge": "J4",
+  "translator": "M8",
+  "scores": {
+   "meaning": 9.0,
+   "completeness": 10.0,
+   "data": 9.0,
+   "naturalness": 8.0,
+   "flow": 9.0,
+   "clean": 8.0
+  },
+  "flags": [
+   {
+    "criterion": "terminology",
+    "type": "terminology",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   },
+   {
+    "criterion": "clean",
+    "type": "untranslated",
+    "severity": "minor"
+   }
+  ]
+ }
+]
