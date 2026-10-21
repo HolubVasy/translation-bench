@@ -47,3 +47,12 @@ def test_translate_skips_hybrid_codes(tmp_path, monkeypatch):
     monkeypatch.setattr(translate, "translate_one", lambda c, p, code, m, g: called.append(code) or dict(BASE))
     translate.main([])
     assert called == ["M7"]
+
+
+def test_participant_codes_keeps_every_code_of_a_model():
+    from src import aggregate
+    cfg = {"translators": {"M5": "luna", "M7": "sol", "H1": "luna", "H2": "luna"},
+           "hybrids": {"H1": {"base": "M7", "model": "luna"}, "H2": {"base": "M7", "model": "luna"}}}
+    got = aggregate.participant_codes(cfg)
+    assert got["luna"] == ["M5", "H1", "H2"]
+    assert got["sol"] == ["M7", "H1", "H2"]
