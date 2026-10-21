@@ -70,3 +70,27 @@ def test_export_session_skips_reverse_pass(tmp_path):
     export_session.main("2026-01-01", str(data), str(tmp_path / "out"))
     rows = json.loads((tmp_path / "out" / "sessions" / "2026-01-01" / "verdicts.json").read_text())
     assert len(rows) == 3 and all(r["scores"]["meaning"] == 8 for r in rows)
+
+
+def test_export_session_survives_missing_calibration_and_translation(tmp_path):
+    data = make_run(tmp_path)
+    (data / "calibration" / "cal__by__J1.json").unlink()
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    cfg["translators"]["M2"] = "openai/gpt-6-sol-pro"
+    cfg["prices"]["M2"] = {"input": 2, "output": 10}
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(cfg))
+    export_session.main("2026-01-01", str(data), str(tmp_path / "out"))
+    session = json.loads((tmp_path / "out" / "sessions" / "2026-01-01" / "session.json").read_text())
+    assert session["judges"]["J1"]["calibration"] is None
+    assert list(session["translators"]) == ["M1"]
+
+
+def test_export_session_labels_any_number_of_papers(tmp_path):
+    data = make_run(tmp_path)
+    (data / "source" / "a3.json").unlink()
+    export_session.main("2026-01-01", str(data), str(tmp_path / "out"))
+    folder = tmp_path / "out" / "sessions" / "2026-01-01"
+    session = json.loads((folder / "session.json").read_text())
+    rows = json.loads((folder / "verdicts.json").read_text())
+    assert [p["id"] for p in session["papers"]] == ["A", "B"]
+    assert sorted({r["paper"] for r in rows}) == ["A", "B"]

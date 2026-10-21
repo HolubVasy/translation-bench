@@ -461,7 +461,8 @@ function showSession(session, verdicts) {
   state.session = session;
   state.verdicts = verdicts;
   var judgesLine = Object.keys(state.session.judges).map(function (j) {
-    var c = state.session.judges[j]; return c.name + " " + c.calibration.caught + " of " + c.calibration.planted;
+    var c = state.session.judges[j];
+    return c.calibration ? c.name + " " + c.calibration.caught + " of " + c.calibration.planted : c.name + " not checked";
   }).join(", ");
   document.getElementById("limits").innerHTML = [
     "Measured on " + state.session.papers.length + " papers in one run. Other kinds of documents may rank differently.",

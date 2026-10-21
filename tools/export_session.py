@@ -18,7 +18,6 @@ from pathlib import Path
 import yaml
 
 CRITERIA = ("meaning", "completeness", "data", "naturalness", "flow", "clean")
-PAPERS = {"a1": "A", "a2": "B", "a3": "C"}
 NAMES = {
     "anthropic/claude-opus-5.5": ("Claude Opus 5.5", "Anthropic"),
     "google/gemini-4-argon": ("Gemini 4 Argon", "Google"),
@@ -36,6 +35,12 @@ LIMITS = [
 ]
 
 
+def papers_of(data):
+    """Articles found in data/source, labelled A, B, C... in order: no titles leave the run."""
+    articles = sorted(p.stem for p in (data / "source").glob("a*.json"))
+    return {art: chr(ord("A") + i) for i, art in enumerate(articles)}
+
+
 def word_count(source):
     return sum(len(re.findall(r"\S+", s.get("text", ""))) for s in source["segments"])
 
@@ -45,16 +50,22 @@ def model_card(model_id):
     return {"model": model_id, "name": name, "vendor": vendor}
 
 
-def translators(cfg, data):
+def translators(cfg, data, papers):
+    """Translators with a translation of every paper; one with a gap is left out and named."""
     out = {}
     for code, model_id in cfg["translators"].items():
+        files = {paper: data / "translations" / ("tr__%s__%s.json" % (art, code)) for art, paper in papers.items()}
+        missing = [paper for paper, f in files.items() if not f.exists()]
+        if missing:
+            print("skipped %s: no translation of paper %s" % (code, ", ".join(missing)))
+            continue
         card = model_card(model_id)
         price = cfg["prices"][code]
         card["price_per_mtok"] = {"input": price["input"], "output": price["output"]}
         card["list_price_per_mtok"] = LIST_PRICES.get(model_id, card["price_per_mtok"])
         card["tokens"] = {}
-        for art, paper in PAPERS.items():
-            usage = json.load(open(data / "translations" / ("tr__%s__%s.json" % (art, code))))["usage"]
+        for paper, f in files.items():
+            usage = json.load(open(f))["usage"]
             card["tokens"][paper] = {"input": usage["prompt_tokens"], "output": usage["completion_tokens"]}
         out[code] = card
     return out
@@ -64,21 +75,28 @@ def judges(cfg, data):
     out = {}
     for code, model_id in cfg["judges"].items():
         card = model_card(model_id)
-        cal = json.load(open(data / "calibration" / ("cal__by__%s.json" % code)))
-        card["calibration"] = {"planted": len(cal["planted"]), "caught": len(cal["caught"]),
-                               "needed": cal["needed"], "passed": cal["passed"]}
+        path = data / "calibration" / ("cal__by__%s.json" % code)
+        card["calibration"] = None
+        if path.exists():
+            cal = json.load(open(path))
+            card["calibration"] = {"planted": len(cal["planted"]), "caught": len(cal["caught"]),
+                                   "needed": cal["needed"], "passed": cal["passed"]}
         out[code] = card
     return out
 
 
-def verdicts(data):
+def verdicts(data, papers, codes):
     rows = []
     for path in sorted(glob.glob(str(data / "judgments" / "ev__a*__by__J*.json"))):
         ev = json.load(open(path))
         if ev.get("pass", "forward") != "forward":
             continue  # reverse pass of double_pass judging: the report counts forward only
-        paper = PAPERS[ev["article"]]
+        paper = papers.get(ev["article"])
+        if paper is None:
+            continue
         for code, scores in ev["scores"].items():
+            if code not in codes:
+                continue
             flags = [{"criterion": f.get("criterion"), "type": f.get("type"), "severity": f.get("severity")}
                      for f in ev.get("flags") or [] if f.get("translator") == code]
             rows.append({"paper": paper, "judge": ev["judge"], "translator": code,
@@ -89,20 +107,22 @@ def verdicts(data):
 def main(session_id, data_dir, out_dir):
     data, out = Path(data_dir), Path(out_dir)
     cfg = yaml.safe_load(open(Path(data_dir).resolve().parent / "config.yaml"))
+    papers = papers_of(data)
+    cards = translators(cfg, data, papers)
     session = {
         "session": session_id,
         "criteria": list(CRITERIA),
         "scale": {"min": 0, "max": 10},
-        "papers": [{"id": PAPERS[a], "words": word_count(json.load(open(data / "source" / (a + ".json")))),
-                    "kind": "scientific-technical"} for a in PAPERS],
-        "translators": translators(cfg, data),
+        "papers": [{"id": papers[a], "words": word_count(json.load(open(data / "source" / (a + ".json")))),
+                    "kind": "scientific-technical"} for a in papers],
+        "translators": cards,
         "judges": judges(cfg, data),
         "limits": LIMITS,
     }
     folder = out / "sessions" / session_id
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "session.json").write_text(json.dumps(session, indent=1, ensure_ascii=True))
-    (folder / "verdicts.json").write_text(json.dumps(verdicts(data), indent=1, ensure_ascii=True))
+    (folder / "verdicts.json").write_text(json.dumps(verdicts(data, papers, set(cards)), indent=1, ensure_ascii=True))
     index_path = out / "sessions" / "index.json"
     index = json.loads(index_path.read_text()) if index_path.exists() else {"sessions": []}
     if session_id not in index["sessions"]:
