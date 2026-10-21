@@ -476,12 +476,15 @@ function showSession(session, verdicts) {
     "Measured on " + state.session.papers.length + " papers in one run. Other kinds of documents may rank differently.",
     "All six criteria weigh the same.",
     "Prices are list prices on the measurement day.",
+    "A translator stopped by the automatic checks on any paper is not shown.",
     "Before judging, each judge had to find planted errors. " + judgesLine + ".",
     "I built this with Claude, and a Claude model won. Keep that in mind.",
     "This is a first measurement, not a guarantee."
   ].map(function (l) { return "<li>" + l + "</li>"; }).join("");
   Object.keys(state.session.translators).filter(function (code) {
-    return state.verdicts.some(function (r) { return r.translator === code; });
+    return state.session.papers.every(function (p) {
+      return state.verdicts.some(function (r) { return r.translator === code && r.paper === p.id; });
+    });
   }).forEach(function (code) { state.stats[code] = translatorStats(code); });
   var corridor = document.getElementById("corridor");
   var showCorridor = function () { document.getElementById("corridorVal").textContent = corridor.value + "%"; };
