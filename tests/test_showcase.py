@@ -94,3 +94,18 @@ def test_export_session_labels_any_number_of_papers(tmp_path):
     rows = json.loads((folder / "verdicts.json").read_text())
     assert [p["id"] for p in session["papers"]] == ["A", "B"]
     assert sorted({r["paper"] for r in rows}) == ["A", "B"]
+
+
+def test_export_session_marks_hybrid_with_base_and_name(tmp_path):
+    data = make_run(tmp_path)
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    cfg["translators"]["H1"] = "openai/gpt-6-luna-pro"
+    cfg["prices"]["H1"] = {"input": 0.1, "output": 0.5}
+    cfg["hybrids"] = {"H1": {"base": "M1", "model": "openai/gpt-6-luna-pro", "source": True}}
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(cfg))
+    for art in ("a1", "a2", "a3"):
+        write(data / "translations" / ("tr__%s__H1.json" % art), {"usage": {"prompt_tokens": 50, "completion_tokens": 60}})
+    export_session.main("2026-01-01", str(data), str(tmp_path / "out"))
+    card = json.loads((tmp_path / "out" / "sessions" / "2026-01-01" / "session.json").read_text())["translators"]["H1"]
+    assert card["base"] == "M1" and card["sees_source"] is True
+    assert card["name"] == "GPT-6 Luna Pro + GPT-6 Luna Pro (sees source)"

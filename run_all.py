@@ -4,6 +4,7 @@ Usage:
   python run_all.py convert articles/1.pdf articles/2.pdf articles/3.pdf
   python run_all.py preflight [--force]
   python run_all.py translate
+  python run_all.py refine
   python run_all.py check
   python run_all.py judge
   python run_all.py calibrate
@@ -16,7 +17,7 @@ Usage:
 import sys
 from datetime import datetime, timezone
 
-from src import aggregate, assemble, calibrate, convert, judge, mech_check, preflight, translate
+from src import aggregate, assemble, calibrate, convert, judge, mech_check, preflight, refine, translate
 
 
 def showcase(rest):
@@ -38,6 +39,8 @@ def main(argv):
         return preflight.main(rest)
     if stage == "translate":
         return translate.main(rest)
+    if stage == "refine":
+        return refine.main(rest)
     if stage == "check":
         return mech_check.main()
     if stage == "judge":
@@ -55,6 +58,7 @@ def main(argv):
             lambda: convert.main(rest),
             lambda: preflight.main([a for a in rest if a.startswith("--")]),
             lambda: translate.main([]),
+            lambda: refine.main([]),
             lambda: mech_check.main(),
             lambda: judge.main(),
             lambda: calibrate.main(),

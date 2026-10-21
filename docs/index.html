@@ -26,6 +26,8 @@ h1 { font-size: 1.7rem; margin: 0 0 6px; }
 .best { color: #fff; background: var(--good); border-color: var(--good); margin-left: 6px; }
 .closest { color: var(--muted); border-color: var(--muted); margin-left: 6px; }
 .fine li { margin-bottom: 4px; }
+.issues-title { font-size: 1rem; margin: 22px 0 8px; }
+.session-pick { margin-left: 6px; }
 .why { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 11px; font-weight: 600; margin-left: 8px; cursor: help; vertical-align: middle; }
 .why:hover { color: var(--accent); border-color: var(--accent); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
@@ -108,6 +110,9 @@ a { color: var(--accent); }
     <div class="scroll"><table id="grid"></table></div>
     <p class="help">Tap the i to see what a column means. Pick a preset, and the translators good enough for that level go to the top. Or drag the columns yourself: the first column matters most, the next one decides between those that tie. Close scores count as a tie, and the corridor sets how close. Click a translator to see more.</p>
     <div id="profile"></div>
+    <h3 class="issues-title">Issues found by judges</h3>
+    <div class="scroll"><table id="issues"></table></div>
+    <p class="help">Number of problems the judges flagged in each translation, across all papers. Fewer is better. Drag the columns to sort, the first column decides.</p>
   </section>
 
   <section class="card" id="tab-presets" hidden>
@@ -130,7 +135,7 @@ a { color: var(--accent); }
   </section>
 
   <footer>
-    Session <span id="sessionId"></span>. Raw protocol: <a id="protoLink" href="#">session files</a>.
+    Session <span id="sessionId"></span> <select id="sessionPick" class="session-pick" aria-label="Session"></select>. Raw protocol: <a id="protoLink" href="#">session files</a>.
     Method and code: <a href="https://github.com/HolubVasy/translation-bench">github.com/HolubVasy/translation-bench</a>.
   </footer>
 </main>
@@ -174,7 +179,8 @@ var HINTS = {
 };
 var FLAG_TYPES = ["untranslated", "number", "meaning", "omission", "addition", "terminology", "style", "format"];
 
-var state = { session: null, verdicts: [], stats: {}, order: LEVELS[1].order.slice(), preset: 1, selected: null };
+var state = { session: null, verdicts: [], stats: {}, order: LEVELS[1].order.slice(), preset: 1, selected: null,
+  issueOrder: ["meaning", "untranslated", "terminology", "number", "omission", "addition", "style", "format", "total"] };
 
 function mean(xs) { return xs.reduce(function (a, b) { return a + b; }, 0) / xs.length; }
 
@@ -197,12 +203,13 @@ function translatorStats(code) {
 
 function pricePer1000(code) {
   var t = state.session.translators[code], usd = 0, words = 0;
+  var base = t.base && state.session.translators[t.base] ? pricePer1000(t.base) : 0;
   state.session.papers.forEach(function (p) {
     var tk = t.tokens[p.id];
     usd += (tk.input * t.list_price_per_mtok.input + tk.output * t.list_price_per_mtok.output) / 1e6;
     words += p.words;
   });
-  return usd / words * 1000;
+  return usd / words * 1000 + base;
 }
 
 function flagCounts(rows) {
@@ -329,13 +336,45 @@ function fitTable(grid) {
   grid.classList.remove("measuring");
 }
 
+var ISSUE_LABELS = { untranslated: "Untranslated", terminology: "Terms", meaning: "Meaning", number: "Numbers",
+  omission: "Omitted", addition: "Added", style: "Style", format: "Format", total: "Total" };
+
+function issueValue(s, col) {
+  if (col === "total") { return FLAG_TYPES.reduce(function (a, t) { return a + s.flags[t]; }, 0); }
+  return s.flags[col];
+}
+
+function renderIssues() {
+  var stats = Object.keys(state.stats).map(function (k) { return state.stats[k]; });
+  stats.sort(function (x, y) {
+    for (var i = 0; i < state.issueOrder.length; i += 1) {
+      var d = issueValue(x, state.issueOrder[i]) - issueValue(y, state.issueOrder[i]);
+      if (d !== 0) { return d; }
+    }
+    return 0;
+  });
+  var head = "<tr><th>Translator</th>" + state.issueOrder.map(function (col, i) {
+    return "<th draggable=\"true\" data-col=\"" + col + "\" class=\"" + (i === 0 ? "sortkey" : "") + "\">" + ISSUE_LABELS[col] + "</th>";
+  }).join("") + "</tr>";
+  var body = stats.map(function (s) {
+    return "<tr><td><b>" + s.card.name + "</b></td>" + state.issueOrder.map(function (col) {
+      return "<td>" + issueValue(s, col) + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  var table = document.getElementById("issues");
+  table.innerHTML = head + body;
+  bindDrag(table, "issueOrder", renderIssues);
+}
+
 function miniBars(flags) {
   var max = Math.max.apply(null, FLAG_TYPES.map(function (t) { return flags[t]; }).concat([1]));
   return "<span class=\"bars\" title=\"" + FLAG_TYPES.map(function (t) { return t + " " + flags[t]; }).join(", ") + "\">" +
     FLAG_TYPES.map(function (t) { return "<span style=\"height:" + (2 + 18 * flags[t] / max) + "px\"></span>"; }).join("") + "</span>";
 }
 
-function bindDrag(grid) {
+function bindDrag(grid, orderKey, rerender) {
+  orderKey = orderKey || "order";
+  rerender = rerender || function () { state.preset = -1; renderChips(); renderGrid(); };
   var dragged = null;
   Array.prototype.forEach.call(grid.querySelectorAll("th[draggable]"), function (th) {
     th.addEventListener("dragstart", function (e) { dragged = th.dataset.col; e.dataTransfer.effectAllowed = "move"; });
@@ -345,12 +384,10 @@ function bindDrag(grid) {
       e.preventDefault();
       var target = th.dataset.col;
       if (!dragged || dragged === target) { return; }
-      var order = state.order.filter(function (c) { return c !== dragged; });
+      var order = state[orderKey].filter(function (c) { return c !== dragged; });
       order.splice(order.indexOf(target), 0, dragged);
-      state.order = order;
-      state.preset = -1;
-      renderChips();
-      renderGrid();
+      state[orderKey] = order;
+      rerender();
     });
   });
 }
@@ -449,12 +486,21 @@ function start() {
     return;
   }
   fetch("data/sessions/index.json").then(function (r) { return r.json(); }).then(function (index) {
-    var base = "data/sessions/" + index.latest + "/";
-    document.getElementById("sessionId").textContent = index.latest;
-    document.getElementById("protoLink").href = base + "session.json";
-    return Promise.all([fetch(base + "session.json").then(function (r) { return r.json(); }),
-                        fetch(base + "verdicts.json").then(function (r) { return r.json(); })]);
-  }).then(function (data) { showSession(data[0], data[1]); });
+    var pick = document.getElementById("sessionPick");
+    pick.innerHTML = index.sessions.slice().reverse().map(function (s) { return "<option>" + s + "</option>"; }).join("");
+    pick.value = index["default"] || index.latest;
+    pick.onchange = function () { loadSession(pick.value); };
+    loadSession(pick.value);
+  });
+}
+
+function loadSession(id) {
+  var base = "data/sessions/" + id + "/";
+  document.getElementById("sessionId").textContent = id;
+  document.getElementById("protoLink").href = base + "session.json";
+  Promise.all([fetch(base + "session.json").then(function (r) { return r.json(); }),
+               fetch(base + "verdicts.json").then(function (r) { return r.json(); })])
+    .then(function (data) { state.stats = {}; state.selected = null; showSession(data[0], data[1]); });
 }
 
 function failedJudges(session) {
@@ -487,6 +533,16 @@ function showSession(session, verdicts) {
       return state.verdicts.some(function (r) { return r.translator === code && r.paper === p.id; });
     });
   }).forEach(function (code) { state.stats[code] = translatorStats(code); });
+  bindControlsOnce();
+  renderChips();
+  renderGrid();
+  renderIssues();
+  if (!document.getElementById("tab-presets").hidden) { renderPresets(); }
+}
+
+function bindControlsOnce() {
+  if (state.bound) { return; }
+  state.bound = true;
   var corridor = document.getElementById("corridor");
   var showCorridor = function () { document.getElementById("corridorVal").textContent = corridor.value + "%"; };
   corridor.addEventListener("input", function () { showCorridor(); renderGrid(); });
@@ -495,8 +551,6 @@ function showSession(session, verdicts) {
   document.getElementById("docWords").addEventListener("input", renderPresets);
   bindTabs();
   window.addEventListener("resize", function () { fitTable(document.getElementById("grid")); });
-  renderChips();
-  renderGrid();
 }
 
 start();
