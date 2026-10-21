@@ -458,10 +458,11 @@ function start() {
 }
 
 function failedJudges(session) {
-  return Object.keys(session.judges).filter(function (j) {
+  var judges = Object.keys(session.judges), failed = judges.filter(function (j) {
     var c = session.judges[j].calibration;
     return c && c.passed === false;
   });
+  return failed.length === judges.length ? [] : failed;
 }
 
 function showSession(session, verdicts) {
