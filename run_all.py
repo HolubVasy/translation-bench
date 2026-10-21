@@ -9,12 +9,22 @@ Usage:
   python run_all.py calibrate
   python run_all.py report
   python run_all.py assemble [--translator M4]
+  python run_all.py showcase [session-id]
   python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf [--force]
 """
 
 import sys
+from datetime import datetime, timezone
 
 from src import aggregate, assemble, calibrate, convert, judge, mech_check, preflight, translate
+
+
+def showcase(rest):
+    """Write the public protocol to docs/data and a self-contained data/report/report.html."""
+    from tools import build_report, export_session
+    session_id = rest[0] if rest else datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    export_session.main(session_id, "data", "docs/data")
+    return build_report.main("docs/index.html", "docs/data", "data/report/report.html")
 
 
 def main(argv):
@@ -38,6 +48,8 @@ def main(argv):
         return aggregate.main()
     if stage == "assemble":
         return assemble.main(rest)
+    if stage == "showcase":
+        return showcase(rest)
     if stage == "full":
         steps = [
             lambda: convert.main(rest),
@@ -48,6 +60,7 @@ def main(argv):
             lambda: calibrate.main(),
             lambda: aggregate.main(),
             lambda: assemble.main([]),
+            lambda: showcase([]),
         ]
         for step in steps:
             code = step()

@@ -1,0 +1,210 @@
+{
+ "session": "2026-10-20",
+ "criteria": [
+  "meaning",
+  "completeness",
+  "data",
+  "naturalness",
+  "flow",
+  "clean"
+ ],
+ "scale": {
+  "min": 0,
+  "max": 10
+ },
+ "papers": [
+  {
+   "id": "A",
+   "words": 6568,
+   "kind": "scientific-technical"
+  },
+  {
+   "id": "B",
+   "words": 5545,
+   "kind": "scientific-technical"
+  },
+  {
+   "id": "C",
+   "words": 5840,
+   "kind": "scientific-technical"
+  }
+ ],
+ "translators": {
+  "M2": {
+   "model": "google/gemini-4-argon",
+   "name": "Gemini 4 Argon",
+   "vendor": "Google",
+   "price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0
+   },
+   "list_price_per_mtok": {
+    "input": 4.0,
+    "output": 20.0
+   },
+   "tokens": {
+    "A": {
+     "input": 14949,
+     "output": 17959
+    },
+    "B": {
+     "input": 11364,
+     "output": 14360
+    },
+    "C": {
+     "input": 15611,
+     "output": 18256
+    }
+   }
+  },
+  "M5": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Luna Pro",
+   "vendor": "OpenAI",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "tokens": {
+    "A": {
+     "input": 73608,
+     "output": 31291
+    },
+    "B": {
+     "input": 60969,
+     "output": 27504
+    },
+    "C": {
+     "input": 80717,
+     "output": 34718
+    }
+   }
+  },
+  "M6": {
+   "model": "google/gemini-3.8-flash",
+   "name": "Gemini 3.8 Flash",
+   "vendor": "Google",
+   "price_per_mtok": {
+    "input": 0.83,
+    "output": 4.12
+   },
+   "list_price_per_mtok": {
+    "input": 0.83,
+    "output": 4.12
+   },
+   "tokens": {
+    "A": {
+     "input": 14257,
+     "output": 32125
+    },
+    "B": {
+     "input": 11343,
+     "output": 36618
+    },
+    "C": {
+     "input": 11035,
+     "output": 34577
+    }
+   }
+  },
+  "M7": {
+   "model": "openai/gpt-6-sol-pro",
+   "name": "GPT-6 Sol Pro",
+   "vendor": "OpenAI",
+   "price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0
+   },
+   "list_price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0
+   },
+   "tokens": {
+    "A": {
+     "input": 73519,
+     "output": 32443
+    },
+    "B": {
+     "input": 61220,
+     "output": 27112
+    },
+    "C": {
+     "input": 60688,
+     "output": 26887
+    }
+   }
+  },
+  "M8": {
+   "model": "anthropic/claude-opus-5.5",
+   "name": "Claude Opus 5.5",
+   "vendor": "Anthropic",
+   "price_per_mtok": {
+    "input": 4.0,
+    "output": 20.0
+   },
+   "list_price_per_mtok": {
+    "input": 4.0,
+    "output": 20.0
+   },
+   "tokens": {
+    "A": {
+     "input": 19977,
+     "output": 24906
+    },
+    "B": {
+     "input": 16659,
+     "output": 19831
+    },
+    "C": {
+     "input": 16759,
+     "output": 20090
+    }
+   }
+  }
+ },
+ "judges": {
+  "J1": {
+   "model": "anthropic/claude-opus-5.5",
+   "name": "Claude Opus 5.5",
+   "vendor": "Anthropic",
+   "calibration": {
+    "planted": 5,
+    "caught": 5,
+    "needed": 3,
+    "passed": true
+   }
+  },
+  "J3": {
+   "model": "google/gemini-4-argon",
+   "name": "Gemini 4 Argon",
+   "vendor": "Google",
+   "calibration": {
+    "planted": 5,
+    "caught": 4,
+    "needed": 3,
+    "passed": true
+   }
+  },
+  "J4": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Luna Pro",
+   "vendor": "OpenAI",
+   "calibration": {
+    "planted": 5,
+    "caught": 4,
+    "needed": 3,
+    "passed": true
+   }
+  }
+ },
+ "limits": [
+  "Three scientific-technical papers, one run, equal criterion weights.",
+  "The ranking may differ for other kinds of documents.",
+  "Prices are per million tokens on the measurement date; list prices are given where a launch discount applied.",
+  "The pipeline was built with Claude, and an Anthropic model won."
+ ]
+}

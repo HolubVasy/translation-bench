@@ -1,22 +1,36 @@
 # translation-bench
 
-Blind benchmark of LLM translators (Russian to English) judged by external
-LLM reviewers. The goal is to pick the cheapest model that still translates
-accurately and reads naturally, not to crown the strongest flagship.
+Blind benchmark of LLM translators (English to Russian) judged by other
+LLMs, each judge checked first on planted errors. The goal is not to crown the
+strongest model but to find who is good enough for a given level of service,
+and what that costs. Run it on your own documents and you get your own answer.
+
+Live results: https://holubvasy.github.io/translation-bench/
+
+## Before you start
+
+1. Python 3.10 or newer (tested on 3.12). Check with `python3 --version`.
+2. An OpenRouter account with credit and an API key (openrouter.ai, Keys).
+   One key opens every model in `config.yaml`. With the current lineup a full
+   run on three papers of about 6000 words each costs about 6.5 USD
+   (15 translations, 45 verdicts, judge calibration).
+3. Git, to clone the repository.
+4. Optional: a GitHub account if you fork it. GitHub Actions runs the offline
+   tests on every pull request and needs no key.
 
 ## How it works
 
 1. Convert. Each `.pdf` (or `.docx`) article is flattened into a JSON list of segments
    with structural ids (`S2-p3` = section 2, paragraph 3). Images become
    `[IMAGE_n]` placeholders and are restored by hand after the winner is chosen.
-2. Translate. Every translator model (blind codes `M1..M5`) translates every
+2. Translate. Every translator model (blind codes such as `M2`, `M5`) translates every
    article, returning the same JSON with translated `text` fields. Structure
    is validated and broken replies are retried.
 3. Check and gate. Numbers, URLs, placeholders, list markers, glossary
    terms and source-script residue are compared segment by segment,
    deterministically. Gates (length ratio, residue, glossary violations,
    missing segments) disqualify a translation before any judge sees it.
-4. Judge. Every judge model (`J1..J3`) sees one article plus all its
+4. Judge. Every judge model (`J1`, `J3`, `J4`) sees one article plus all its
    admitted translations in a seeded shuffled order, scores six criteria,
    ranks them and flags concrete violations with segment ids. With
    `judging.double_pass` the judge sees the same set again in reversed order,
@@ -57,15 +71,38 @@ The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
     tests/               unit tests (pytest) and smoke.py, offline, run in CI on every PR
     docs/STYLE.md        code style, five rules
     docs/ROADMAP.md      agreed and parked work
+    tools/
+      export_session.py  run results -> docs/data/sessions/<date>/ (public protocol, no text)
+      build_report.py    page plus latest session -> data/report/report.html
+    docs/index.html      the showcase page, served by GitHub Pages
     run_all.py           stage runner
 
 ## Run
 
+    git clone https://github.com/HolubVasy/translation-bench.git
+    cd translation-bench
     python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-    scripts/write_env.sh                 # on the VPS; elsewhere, fill .env by hand
+    cp .env.example .env                 # put your OpenRouter key into .env
     export $(cat .env)
 
+    # put your documents (.pdf or .docx) into articles/
     .venv/bin/python run_all.py full articles/1.pdf articles/2.pdf articles/3.pdf
+
+On Windows use `.venv\Scripts\python` instead of `.venv/bin/python` and set
+the key with `set OPENROUTER_API_KEY=...`.
+
+What you get:
+
+- `data/report/report.html` is the same interactive page as the live one,
+  with your numbers. It opens with a double click, no server needed.
+- `data/report/summary.md` holds the full tables, spend and judge checks.
+- `docs/data/sessions/<date>/` is the public protocol of the run: scores,
+  remark types, prices and token counts, no source or translated text.
+
+Cost warning. Preflight prints a cost estimate and stops above
+`budget.max_usd`. The estimate is currently too low for Russian output, by
+about five times (issue #74). Plan for the real cost from "Before you start"
+and set `budget.max_usd` with that margin.
 
 Stages can be run one at a time: `convert`, `preflight`, `translate`, `check`,
 `judge`, `calibrate`, `report`, `assemble`. Preflight validates config and
