@@ -60,3 +60,13 @@ def test_build_report_refuses_template_without_marker(tmp_path):
     template = tmp_path / "index.html"
     template.write_text("<html></html>")
     assert build_report.main(str(template), str(tmp_path / "out"), str(tmp_path / "r.html")) == 1
+
+
+def test_export_session_skips_reverse_pass(tmp_path):
+    data = make_run(tmp_path)
+    scores = {c: 1 for c in export_session.CRITERIA}
+    write(data / "judgments" / "ev__a1__by__J1__r.json",
+          {"article": "a1", "judge": "J1", "pass": "reverse", "scores": {"M1": scores}, "flags": []})
+    export_session.main("2026-01-01", str(data), str(tmp_path / "out"))
+    rows = json.loads((tmp_path / "out" / "sessions" / "2026-01-01" / "verdicts.json").read_text())
+    assert len(rows) == 3 and all(r["scores"]["meaning"] == 8 for r in rows)

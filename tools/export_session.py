@@ -75,6 +75,8 @@ def verdicts(data):
     rows = []
     for path in sorted(glob.glob(str(data / "judgments" / "ev__a*__by__J*.json"))):
         ev = json.load(open(path))
+        if ev.get("pass", "forward") != "forward":
+            continue  # reverse pass of double_pass judging: the report counts forward only
         paper = PAPERS[ev["article"]]
         for code, scores in ev["scores"].items():
             flags = [{"criterion": f.get("criterion"), "type": f.get("type"), "severity": f.get("severity")}
