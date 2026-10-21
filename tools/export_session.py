@@ -63,12 +63,29 @@ def translators(cfg, data, papers):
         price = cfg["prices"][code]
         card["price_per_mtok"] = {"input": price["input"], "output": price["output"]}
         card["list_price_per_mtok"] = LIST_PRICES.get(model_id, card["price_per_mtok"])
+        hybrid_card(cfg, code, card)
         card["tokens"] = {}
         for paper, f in files.items():
             usage = json.load(open(f))["usage"]
             card["tokens"][paper] = {"input": usage["prompt_tokens"], "output": usage["completion_tokens"]}
         out[code] = card
     return out
+
+
+def hybrid_card(cfg, code, card):
+    """A hybrid is a base translation plus a second pass; the page adds both prices."""
+    spec = (cfg.get("hybrids") or {}).get(code)
+    if not spec:
+        return
+    base_name = NAMES.get(cfg["translators"][spec["base"]], (spec["base"],))[0]
+    second = NAMES.get(spec["model"], (spec["model"],))[0]
+    card.update({
+        "name": "%s + %s%s" % (base_name, second, " (sees source)" if spec.get("source") else ""),
+        "vendor": "hybrid",
+        "base": spec["base"],
+        "second_pass": spec["model"],
+        "sees_source": bool(spec.get("source")),
+    })
 
 
 def judges(cfg, data):
@@ -128,6 +145,7 @@ def main(session_id, data_dir, out_dir):
     if session_id not in index["sessions"]:
         index["sessions"].append(session_id)
     index["latest"] = sorted(index["sessions"])[-1]
+    index.setdefault("default", index["latest"])
     index_path.write_text(json.dumps(index, indent=1, ensure_ascii=True))
     print("exported", folder)
 

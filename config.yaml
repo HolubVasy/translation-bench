@@ -71,3 +71,10 @@ request:
   max_retries: 3
   timeout_sec: 900
   max_tokens: 64000   # long articles; Gemini caps output at 65536
+
+# Optional second pass: a base translation proofread by another model.
+# List each hybrid code in translators too (with the proofreader's model id),
+# so it is judged like any translator; src.translate skips it, src.refine writes it.
+# hybrids:
+#   H1: {base: M7, model: openai/gpt-6-luna-pro, source: false}
+#   H2: {base: M7, model: openai/gpt-6-luna-pro, source: true}

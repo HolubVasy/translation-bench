@@ -304,13 +304,28 @@ def section_agreement(agreement, consistency):
     return lines
 
 
+def participant_codes(cfg):
+    """model -> every translation code it took part in; a hybrid counts for its
+    proofreader and for the model of its base translation."""
+    out = {}
+    hybrids = cfg.get("hybrids") or {}
+    for code, model in cfg["translators"].items():
+        models = {model}
+        spec = hybrids.get(code)
+        if spec and spec.get("base") in cfg["translators"]:
+            models.add(cfg["translators"][spec["base"]])
+        for m in models:
+            out.setdefault(m, []).append(code)
+    return out
+
+
 def section_self_scoring(cfg, totals, excluded):
-    participants = {model: code for code, model in cfg["translators"].items()}
-    self_judges = {j: participants[m] for j, m in cfg.get("judges", {}).items() if m in participants}
-    if not self_judges:
+    participants = participant_codes(cfg)
+    pairs = [(j, code) for j, m in cfg.get("judges", {}).items() for code in participants.get(m, [])]
+    if not pairs:
         return []
     lines = ["", "## Self-scoring check", ""]
-    for judge, own_code in self_judges.items():
+    for judge, own_code in pairs:
         lines.append(_self_scoring_line(judge, own_code, totals, excluded))
     return lines
 

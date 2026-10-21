@@ -106,8 +106,11 @@ def main(argv):
     failures = 0
     glossary = load_glossary(cfg)
     usage_before = key_usage()
+    hybrids = cfg.get("hybrids") or {}
     for article_path in articles:
         for code, model in cfg["translators"].items():
+            if code in hybrids:
+                continue  # written by src.refine, not translated directly
             out = OUT_DIR / ("tr__%s__%s.json" % (article_path.stem, code))
             if out.exists():
                 print("skip %s (exists)" % out.name)
