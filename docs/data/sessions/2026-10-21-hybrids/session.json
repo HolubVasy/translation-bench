@@ -1,0 +1,277 @@
+{
+ "session": "2026-10-21-hybrids",
+ "criteria": [
+  "meaning",
+  "completeness",
+  "data",
+  "naturalness",
+  "flow",
+  "clean"
+ ],
+ "scale": {
+  "min": 0,
+  "max": 10
+ },
+ "papers": [
+  {
+   "id": "A",
+   "words": 6568,
+   "kind": "scientific-technical"
+  },
+  {
+   "id": "B",
+   "words": 5545,
+   "kind": "scientific-technical"
+  },
+  {
+   "id": "C",
+   "words": 5840,
+   "kind": "scientific-technical"
+  }
+ ],
+ "translators": {
+  "M7": {
+   "model": "openai/gpt-6-sol-pro",
+   "name": "GPT-6 Sol Pro",
+   "vendor": "OpenAI",
+   "price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0
+   },
+   "list_price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0
+   },
+   "tokens": {
+    "A": {
+     "input": 73519,
+     "output": 32443
+    },
+    "B": {
+     "input": 61220,
+     "output": 27112
+    },
+    "C": {
+     "input": 60688,
+     "output": 26887
+    }
+   }
+  },
+  "H1": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Sol Pro + GPT-6 Luna Pro",
+   "vendor": "hybrid",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "base": "M7",
+   "second_pass": "openai/gpt-6-luna-pro",
+   "sees_source": false,
+   "tokens": {
+    "A": {
+     "input": 79661,
+     "output": 31967
+    },
+    "B": {
+     "input": 69064,
+     "output": 28317
+    },
+    "C": {
+     "input": 68034,
+     "output": 27198
+    }
+   }
+  },
+  "H2": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Sol Pro + GPT-6 Luna Pro (sees source)",
+   "vendor": "hybrid",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "base": "M7",
+   "second_pass": "openai/gpt-6-luna-pro",
+   "sees_source": true,
+   "tokens": {
+    "A": {
+     "input": 120502,
+     "output": 32572
+    },
+    "B": {
+     "input": 101268,
+     "output": 28014
+    },
+    "C": {
+     "input": 100967,
+     "output": 28208
+    }
+   }
+  },
+  "M5": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Luna Pro",
+   "vendor": "OpenAI",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "tokens": {
+    "A": {
+     "input": 73608,
+     "output": 31291
+    },
+    "B": {
+     "input": 60969,
+     "output": 27504
+    },
+    "C": {
+     "input": 80717,
+     "output": 34718
+    }
+   }
+  },
+  "H3": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Luna Pro + GPT-6 Luna Pro (sees source)",
+   "vendor": "hybrid",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "base": "M5",
+   "second_pass": "openai/gpt-6-luna-pro",
+   "sees_source": true,
+   "tokens": {
+    "A": {
+     "input": 121256,
+     "output": 32908
+    },
+    "B": {
+     "input": 103101,
+     "output": 28354
+    },
+    "C": {
+     "input": 102407,
+     "output": 28687
+    }
+   }
+  },
+  "M8": {
+   "model": "anthropic/claude-opus-5.5",
+   "name": "Claude Opus 5.5",
+   "vendor": "Anthropic",
+   "price_per_mtok": {
+    "input": 4.0,
+    "output": 20.0
+   },
+   "list_price_per_mtok": {
+    "input": 4.0,
+    "output": 20.0
+   },
+   "tokens": {
+    "A": {
+     "input": 19977,
+     "output": 24906
+    },
+    "B": {
+     "input": 16659,
+     "output": 19831
+    },
+    "C": {
+     "input": 16759,
+     "output": 20090
+    }
+   }
+  },
+  "H4": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "Claude Opus 5.5 + GPT-6 Luna Pro (sees source)",
+   "vendor": "hybrid",
+   "price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "list_price_per_mtok": {
+    "input": 0.1,
+    "output": 0.5
+   },
+   "base": "M8",
+   "second_pass": "openai/gpt-6-luna-pro",
+   "sees_source": true,
+   "tokens": {
+    "A": {
+     "input": 124709,
+     "output": 35042
+    },
+    "B": {
+     "input": 105301,
+     "output": 30071
+    },
+    "C": {
+     "input": 104533,
+     "output": 30062
+    }
+   }
+  }
+ },
+ "judges": {
+  "J1": {
+   "model": "anthropic/claude-opus-5.5",
+   "name": "Claude Opus 5.5",
+   "vendor": "Anthropic",
+   "calibration": {
+    "planted": 5,
+    "caught": 5,
+    "needed": 3,
+    "passed": true
+   }
+  },
+  "J3": {
+   "model": "google/gemini-4-argon",
+   "name": "Gemini 4 Argon",
+   "vendor": "Google",
+   "calibration": {
+    "planted": 5,
+    "caught": 4,
+    "needed": 3,
+    "passed": true
+   }
+  },
+  "J4": {
+   "model": "openai/gpt-6-luna-pro",
+   "name": "GPT-6 Luna Pro",
+   "vendor": "OpenAI",
+   "calibration": {
+    "planted": 5,
+    "caught": 4,
+    "needed": 3,
+    "passed": true
+   }
+  }
+ },
+ "limits": [
+  "Hybrid round. Each base translation was judged together with its proofread versions, in a separate group per base, by the same three judges.",
+  "Three scientific-technical papers, one run, equal criterion weights.",
+  "The ranking may differ for other kinds of documents.",
+  "Prices are per million tokens on the measurement date; list prices are given where a launch discount applied.",
+  "The pipeline was built with Claude, and an Anthropic model won."
+ ]
+}
