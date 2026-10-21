@@ -457,9 +457,17 @@ function start() {
   }).then(function (data) { showSession(data[0], data[1]); });
 }
 
+function failedJudges(session) {
+  return Object.keys(session.judges).filter(function (j) {
+    var c = session.judges[j].calibration;
+    return c && c.passed === false;
+  });
+}
+
 function showSession(session, verdicts) {
+  var failed = failedJudges(session);
   state.session = session;
-  state.verdicts = verdicts;
+  state.verdicts = verdicts.filter(function (r) { return failed.indexOf(r.judge) < 0; });
   var judgesLine = Object.keys(state.session.judges).map(function (j) {
     var c = state.session.judges[j];
     return c.calibration ? c.name + " " + c.calibration.caught + " of " + c.calibration.planted : c.name + " not checked";
@@ -472,7 +480,9 @@ function showSession(session, verdicts) {
     "I built this with Claude, and a Claude model won. Keep that in mind.",
     "This is a first measurement, not a guarantee."
   ].map(function (l) { return "<li>" + l + "</li>"; }).join("");
-  Object.keys(state.session.translators).forEach(function (code) { state.stats[code] = translatorStats(code); });
+  Object.keys(state.session.translators).filter(function (code) {
+    return state.verdicts.some(function (r) { return r.translator === code; });
+  }).forEach(function (code) { state.stats[code] = translatorStats(code); });
   var corridor = document.getElementById("corridor");
   var showCorridor = function () { document.getElementById("corridorVal").textContent = corridor.value + "%"; };
   corridor.addEventListener("input", function () { showCorridor(); renderGrid(); });
