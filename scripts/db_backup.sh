@@ -35,12 +35,20 @@ if [ -z "$backup_dir" ]; then
     backup_dir="$HOME/backups/translation-bench"
 fi
 
+# A dump holds every word of every interview. Nobody else on the VPS has any
+# business reading it, so the directory and the files are owner only. chmod
+# covers a directory that already exists from an earlier version.
+umask 077
 mkdir -p "$backup_dir"
+chmod 700 "$backup_dir"
+
 stamp=$(date -u +%Y-%m-%d)
 target="$backup_dir/$db_name-$stamp.sql.gz"
 work="$backup_dir/.$db_name-$stamp.$$.sql"
 
-trap 'rm -f "$work" "$work.gz"' EXIT INT TERM
+# The :? guards are not decoration. An empty variable would turn these into
+# rm on a top level path, and a backup script is the worst place to learn it.
+trap 'rm -f "${work:?}" "${work:?}.gz"' EXIT INT TERM
 
 # The dump goes to a temporary file, not through a pipe into the target.
 # POSIX sh has no pipefail, so in `pg_dump | gzip` the status is gzip's: a
@@ -61,6 +69,19 @@ fi
 gzip -c "$work" > "$work.gz"
 mv "$work.gz" "$target"
 
-find "$backup_dir" -name "$db_name-*.sql.gz" -type f -mtime +14 -delete
+# Retention counts files, it does not measure their age. After a cron outage
+# longer than the window an age based rule would delete every surviving dump
+# on the first successful night and leave exactly one. The stamp is
+# YYYY-MM-DD, so sorting the names is sorting them by date.
+keep=14
+dumps=$(ls -1 "$backup_dir" | grep "^$db_name-[0-9][0-9-]*\.sql\.gz$" || true)
+count=$(printf '%s\n' "$dumps" | grep -c . || true)
+
+if [ "$count" -gt "$keep" ]; then
+    printf '%s\n' "$dumps" | sort | head -n "$((count - keep))" |
+        while IFS= read -r old; do
+            rm -f "${backup_dir:?}/${old:?}"
+        done
+fi
 
 echo "db_backup: wrote $target"

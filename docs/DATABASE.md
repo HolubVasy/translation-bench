@@ -49,7 +49,16 @@ reaches the container on the VPS.
 ## Backup
 
 `scripts/db_backup.sh` writes one gzipped dump a day into `BACKUP_DIR` from
-`.env`, outside the repository, and deletes dumps older than 14 days.
+`.env`, outside the repository, and keeps the newest 14 dumps.
+
+It keeps a count, not an age. If cron fails for three weeks, an age based
+rule would delete every surviving dump on the first successful night and
+leave one file. Counting keeps the last fourteen whatever their dates are.
+
+The directory is 0700 and the dumps 0600, set by `umask 077` and a `chmod`
+on the directory. A dump holds every word of every interview, so no other
+user on the VPS can read it. That is the same intent as the loopback-only
+port: the data does not become readable just because someone has a shell.
 
 A failed dump never replaces a good one. The script dumps to a temporary file
 first and checks `pg_dump` on its own, because in `pg_dump | gzip` the shell
