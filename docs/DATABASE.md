@@ -70,9 +70,17 @@ A revision is never edited once it has run anywhere. A mistake is corrected
 by the next revision, for the same reason a cut or a score is never
 overwritten: something already points at what was there.
 
-CI applies every revision to an empty PostgreSQL 17, counts 31 tables and 45
-foreign keys, then downgrades to base and checks nothing is left. A revision
-that cannot be undone fails there rather than on the VPS.
+The schema is the one thing no offline test can check: it is only real once
+PostgreSQL accepts it. So it is checked against a real server rather than
+asserted on paper. Apply every revision to an empty PostgreSQL 17, count 31
+tables and 45 foreign keys, downgrade to base, check nothing is left.
+
+That sequence becomes the `migrations` job in CI, which pull request 143
+adds. It is not in `.github/workflows/ci.yml` on this branch, and that is
+deliberate: the reviewing action refuses to run on a pull request that edits
+a workflow file, so the workflow change is kept apart from the code it
+guards. Until 143 is merged the sequence is run by hand against a throwaway
+container, and a revision that cannot be undone is not caught by CI.
 
 ## Connecting from your own machine
 
