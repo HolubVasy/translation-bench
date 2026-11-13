@@ -37,11 +37,25 @@ def to_sqlalchemy_url(raw):
         + _masked(url))
 
 
+SCHEME_CHARS = "+-."
+
+
 def _masked(url):
-    """Return url with anything before the host replaced, for error text."""
+    """Return the scheme and the host of url, never what sits between them.
+
+    Anything that is not plainly scheme://...@host is not echoed at all. A
+    value with no scheme can still be user:password@host, and this function
+    exists so that no password ever reaches an error message or a traceback.
+    """
     marker = "://"
-    at = url.rfind("@")
     start = url.find(marker)
-    if start < 0 or at < 0 or at < start:
-        return url.split(marker)[0] + marker + "..."
-    return url[: start + len(marker)] + "..." + url[at:]
+    if start <= 0:
+        return "<not a URL>"
+    scheme = url[:start]
+    if not all(c.isalnum() or c in SCHEME_CHARS for c in scheme):
+        return "<not a URL>"
+    rest = url[start + len(marker):]
+    at = rest.rfind("@")
+    if at < 0:
+        return scheme + marker + "..."
+    return scheme + marker + "..." + rest[at:]
