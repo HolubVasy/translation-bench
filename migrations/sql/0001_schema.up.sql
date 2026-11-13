@@ -125,8 +125,10 @@ CREATE TABLE tools (
     model          text NOT NULL,
     version        text NOT NULL,
     effort         text NOT NULL DEFAULT '',
-    price_in_usd   numeric(12, 6) NOT NULL DEFAULT 0,
-    price_out_usd  numeric(12, 6) NOT NULL DEFAULT 0,
+    price_in_usd   numeric(12, 6) NOT NULL DEFAULT 0
+                   CHECK (price_in_usd >= 0),
+    price_out_usd  numeric(12, 6) NOT NULL DEFAULT 0
+                   CHECK (price_out_usd >= 0),
     created_at     timestamptz NOT NULL DEFAULT now(),
     UNIQUE (vendor_id, model, version, effort)
 );
