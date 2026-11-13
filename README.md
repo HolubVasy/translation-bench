@@ -68,9 +68,12 @@ The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
     scripts/
       read_openrouter_key.sh   reads the key LibreChat already uses (masked)
       write_env.sh             copies it into .env and validates it
+      db_backup.sh             one dump of the app database a day, 14 kept
     tests/               unit tests (pytest) and smoke.py, offline, run in CI on every PR
     docs/STYLE.md        code style, five rules
     docs/ROADMAP.md      agreed and parked work
+    docs/DATABASE.md     PostgreSQL on the VPS: first run, tunnel, backup
+    docker-compose.yml   that database, one container, loopback only
     tools/
       export_session.py  run results -> docs/data/sessions/<date>/ (public protocol, no text)
       build_report.py    page plus latest session -> data/report/report.html
