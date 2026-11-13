@@ -74,6 +74,10 @@ The code-to-model mapping lives only in `config.yaml` and never enters a prompt.
     docs/ROADMAP.md      agreed and parked work
     docs/DATABASE.md     PostgreSQL on the VPS: first run, tunnel, backup
     docker-compose.yml   that database, one container, loopback only
+    alembic.ini          migration settings; the URL comes from DATABASE_URL
+    migrations/
+      versions/          one revision per change, in order
+      sql/               the DDL itself, plain SQL, run by a revision
     tools/
       export_session.py  run results -> docs/data/sessions/<date>/ (public protocol, no text)
       build_report.py    page plus latest session -> data/report/report.html

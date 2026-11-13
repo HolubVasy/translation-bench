@@ -15,7 +15,8 @@
 -- the exception: the rows stay for accounting with their session links set
 -- to null, so money is still countable and no text survives.
 
-BEGIN;
+-- There is no BEGIN or COMMIT here on purpose: Alembic runs the whole
+-- revision in one transaction, and a second one nested inside would fight it.
 
 -- ---------------------------------------------------------------- people --
 
@@ -396,5 +397,3 @@ CREATE INDEX payments_user_id_idx ON payments (user_id);
 CREATE INDEX payments_unlocked_session_id_idx
     ON payments (unlocked_session_id);
 CREATE INDEX payments_granted_session_id_idx ON payments (granted_session_id);
-
-COMMIT;
