@@ -1,0 +1,36 @@
+# PostgreSQL for the Translator interview app (AB#297).
+#
+# One service, one named volume, nothing open to the internet. The database
+# name, the user and the password are read from .env and never written here.
+#
+# On the VPS:
+#   cd ~/workspace/translation-bench
+#   docker compose up -d
+#   docker compose ps
+#
+# The runbook, including the daily backup, is docs/DATABASE.md.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: translation_bench_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Bound to the loopback address on purpose. The database is reachable
+      # from the VPS itself and through an SSH tunnel, never from outside.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
+    name: translation_bench_db_data
