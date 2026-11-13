@@ -13,10 +13,18 @@ story (AB#300).
     .env                     database name, user, password, DATABASE_URL
     scripts/db_backup.sh     one dump a day, the last 14 kept
 
-The port is published as `127.0.0.1:5432`, not `0.0.0.0`. The database
-answers to the VPS itself and to an SSH tunnel, to nothing else. There is no
-rule to add to the firewall and no password to rotate after a leak that a
-port scan would have caused.
+The port is published on `127.0.0.1`, not `0.0.0.0`. The database answers to
+the VPS itself and to an SSH tunnel, to nothing else. There is no rule to add
+to the firewall and no password to rotate after a leak that a port scan would
+have caused.
+
+The host port is `DB_PORT` from `.env`, default 5434. It is not 5432 because
+the VPS already runs other Postgres containers: `job_search_db` holds
+`127.0.0.1:5432` and `archive_db` holds `127.0.0.1:5433`. Inside the
+container the port is 5432 as always, so only `DATABASE_URL` and the tunnel
+care. Check what is taken before the first run:
+
+    docker ps --format "{{.Names}} :: {{.Ports}}" | grep 5432
 
 ## First run
 
@@ -41,10 +49,10 @@ To check the connection without printing the password:
 
 The port is closed to the outside on purpose, so open a tunnel instead:
 
-    ssh -N -L 5432:127.0.0.1:5432 deploy@<vps>
+    ssh -N -L 5434:127.0.0.1:5434 deploy@<vps>
 
-While that runs, `postgresql://...@127.0.0.1:5432/...` on your machine
-reaches the container on the VPS.
+While that runs, `postgresql://...@127.0.0.1:5434/...` on your machine
+reaches the container on the VPS. Use whatever `DB_PORT` says if it changed.
 
 ## Backup
 

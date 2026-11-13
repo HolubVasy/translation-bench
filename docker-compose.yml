@@ -22,7 +22,10 @@ services:
     ports:
       # Bound to the loopback address on purpose. The database is reachable
       # from the VPS itself and through an SSH tunnel, never from outside.
-      - "127.0.0.1:5432:5432"
+      # The host port is DB_PORT from .env because the VPS already runs other
+      # Postgres containers; 5432 and 5433 are taken there. Inside the
+      # container it is 5432 as always.
+      - "127.0.0.1:${DB_PORT:-5434}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
