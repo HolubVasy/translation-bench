@@ -38,15 +38,28 @@ fi
 mkdir -p "$backup_dir"
 stamp=$(date -u +%Y-%m-%d)
 target="$backup_dir/$db_name-$stamp.sql.gz"
+work="$backup_dir/.$db_name-$stamp.$$.sql"
 
+trap 'rm -f "$work" "$work.gz"' EXIT INT TERM
+
+# The dump goes to a temporary file, not through a pipe into the target.
+# POSIX sh has no pipefail, so in `pg_dump | gzip` the status is gzip's: a
+# pg_dump that failed would still leave a valid short gzip and look like a
+# backup. Writing the plain dump first lets each step be checked on its own,
+# and the target is only replaced once a good dump exists.
 cd "$repo_dir"
-docker compose exec -T db pg_dump -U "$db_user" -d "$db_name" | gzip > "$target"
-
-if [ ! -s "$target" ]; then
-    echo "db_backup: the dump is empty, keeping nothing" >&2
-    rm -f "$target"
+if ! docker compose exec -T db pg_dump -U "$db_user" -d "$db_name" > "$work"; then
+    echo "db_backup: pg_dump failed, today's earlier dump is untouched" >&2
     exit 1
 fi
+
+if [ ! -s "$work" ]; then
+    echo "db_backup: pg_dump wrote nothing, today's earlier dump is untouched" >&2
+    exit 1
+fi
+
+gzip -c "$work" > "$work.gz"
+mv "$work.gz" "$target"
 
 find "$backup_dir" -name "$db_name-*.sql.gz" -type f -mtime +14 -delete
 

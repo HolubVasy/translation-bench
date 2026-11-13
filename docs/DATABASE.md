@@ -49,8 +49,14 @@ reaches the container on the VPS.
 ## Backup
 
 `scripts/db_backup.sh` writes one gzipped dump a day into `BACKUP_DIR` from
-`.env`, outside the repository, and deletes dumps older than 14 days. It
-fails loudly and keeps nothing if the dump comes out empty.
+`.env`, outside the repository, and deletes dumps older than 14 days.
+
+A failed dump never replaces a good one. The script dumps to a temporary file
+first and checks `pg_dump` on its own, because in `pg_dump | gzip` the shell
+reports gzip's status, and gzip turns an empty input into a valid short file
+that looks like a backup. Today's dump is replaced only after a non-empty
+dump exists, so a night when the container is down leaves yesterday's file
+and an error in the cron mail.
 
 Install it in cron:
 
