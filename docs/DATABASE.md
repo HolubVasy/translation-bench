@@ -3,14 +3,15 @@
 PostgreSQL for the Translator interview app, story 20 on the board (AB#297).
 One container, one named volume, nothing reachable from the internet.
 
-The schema itself is not here. It is drawn and explained on the board wiki
-page "Translator interview diagrams" and is built by migrations in a later
-story (AB#300).
+The schema is drawn and explained on the board wiki page "Translator
+interview diagrams". Here is how it is built and kept.
 
 ## What exists
 
     docker-compose.yml       one service, db, image postgres:17-alpine
     .env                     database name, user, password, DATABASE_URL
+    alembic.ini              migration settings, no connection string in it
+    migrations/              Alembic: env.py, versions/, and the SQL itself
     scripts/db_backup.sh     one dump a day, the last 14 kept
 
 The port is published on `127.0.0.1`, not `0.0.0.0`. The database answers to
@@ -44,6 +45,42 @@ To check the connection without printing the password:
 
     docker compose exec db psql -U "$(grep '^POSTGRES_USER=' .env | cut -d= -f2-)" \
         -d "$(grep '^POSTGRES_DB=' .env | cut -d= -f2-)" -c '\l'
+
+## Migrations
+
+Alembic owns the order and the record of what has run. The DDL itself is
+plain SQL in `migrations/sql/`, run by a revision in `migrations/versions/`.
+There are no SQLAlchemy models in this repository, so autogenerate has
+nothing to compare against and is not used; a new revision carries SQL.
+
+The connection string is never in `alembic.ini`. `env.py` reads
+`DATABASE_URL` from the environment, the same rule the OpenRouter key
+follows, so export `.env` before running anything:
+
+    set -a; . ./.env; set +a
+    alembic upgrade head
+    alembic current
+
+Undoing and inspecting:
+
+    alembic downgrade base        back to an empty database
+    alembic upgrade head --sql    print the SQL, run nothing
+
+A revision is never edited once it has run anywhere. A mistake is corrected
+by the next revision, for the same reason a cut or a score is never
+overwritten: something already points at what was there.
+
+The schema is the one thing no offline test can check: it is only real once
+PostgreSQL accepts it. So it is checked against a real server rather than
+asserted on paper. Apply every revision to an empty PostgreSQL 17, count 31
+tables and 45 foreign keys, downgrade to base, check nothing is left.
+
+That sequence becomes the `migrations` job in CI, which pull request 143
+adds. It is not in `.github/workflows/ci.yml` on this branch, and that is
+deliberate: the reviewing action refuses to run on a pull request that edits
+a workflow file, so the workflow change is kept apart from the code it
+guards. Until 143 is merged the sequence is run by hand against a throwaway
+container, and a revision that cannot be undone is not caught by CI.
 
 ## Connecting from your own machine
 
