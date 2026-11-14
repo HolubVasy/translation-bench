@@ -56,6 +56,78 @@ jobs:
         if: steps.smoke.outcome != 'success' || steps.ascii.outcome != 'success' || steps.unit.outcome != 'success'
         run: exit 1
 
+  # The schema is the one thing no offline test can check: it is only real
+  # once PostgreSQL accepts it. This job applies every migration to an empty
+  # database, counts what appeared, then undoes them and checks nothing is
+  # left, so a revision that cannot be rolled back fails here and not on the
+  # VPS at two in the morning.
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: tbtest
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tbtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres@127.0.0.1:5432/tbtest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q -r requirements.txt
+      - name: Upgrade to head
+        run: alembic upgrade head
+      - name: Thirty-one tables and forty-five foreign keys
+        run: |
+          python - <<'PY'
+          import os
+          import sqlalchemy as sa
+          from src.db_url import to_sqlalchemy_url
+
+          engine = sa.create_engine(to_sqlalchemy_url(os.environ["DATABASE_URL"]))
+          with engine.connect() as c:
+              tables = c.execute(sa.text(
+                  "select count(*) from information_schema.tables"
+                  " where table_schema = 'public'"
+                  " and table_name <> 'alembic_version'")).scalar()
+              keys = c.execute(sa.text(
+                  "select count(*) from information_schema.table_constraints"
+                  " where constraint_schema = 'public'"
+                  " and constraint_type = 'FOREIGN KEY'")).scalar()
+          print("tables", tables, "foreign keys", keys)
+          assert tables == 31, f"expected 31 tables, got {tables}"
+          assert keys == 45, f"expected 45 foreign keys, got {keys}"
+          PY
+      - name: Downgrade to base leaves nothing behind
+        run: |
+          alembic downgrade base
+          python - <<'PY'
+          import os
+          import sqlalchemy as sa
+          from src.db_url import to_sqlalchemy_url
+
+          engine = sa.create_engine(to_sqlalchemy_url(os.environ["DATABASE_URL"]))
+          with engine.connect() as c:
+              left = c.execute(sa.text(
+                  "select count(*) from information_schema.tables"
+                  " where table_schema = 'public'"
+                  " and table_name <> 'alembic_version'")).scalar()
+          print("tables after downgrade", left)
+          assert left == 0, f"downgrade left {left} tables behind"
+          PY
+
   claude-review:
     needs: smoke
     if: always()
@@ -158,6 +230,35 @@ jobs:
             (file:line)".
           claude_args: |
             --allowedTools "Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+      # A skipped review used to look exactly like a clean one. The action
+      # refuses to run with secrets on a PR that edits .github/workflows,
+      # and it skips rather than fails, so the job went green in 13 seconds
+      # and rule 10 was satisfied on paper. This step makes the gate honest:
+      # no REVIEW comment for this commit, no pass.
+      - name: The review must have actually run
+        if: env.HAS_TOKEN == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          short="${SHA:0:7}"
+          for attempt in 1 2 3; do
+            if gh pr view "$PR" --repo "$REPO" --json comments \
+                 --jq '.comments[].body' | grep -q "REVIEW $short"; then
+              echo "review posted for $short"
+              exit 0
+            fi
+            echo "no REVIEW comment yet for $short (attempt $attempt)"
+            sleep 10
+          done
+          echo "::error::The review did not run on $short, so nothing gates"
+          echo "::error::this merge. A pull request that edits a file under"
+          echo "::error::.github/workflows cannot run the reviewing action."
+          echo "::error::Split the workflow change into its own pull request."
+          exit 1
 
       - name: No token, review skipped
         if: env.HAS_TOKEN != 'true'

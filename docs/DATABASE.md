@@ -75,12 +75,15 @@ PostgreSQL accepts it. So it is checked against a real server rather than
 asserted on paper. Apply every revision to an empty PostgreSQL 17, count 31
 tables and 45 foreign keys, downgrade to base, check nothing is left.
 
-That sequence becomes the `migrations` job in CI, which pull request 143
-adds. It is not in `.github/workflows/ci.yml` on this branch, and that is
-deliberate: the reviewing action refuses to run on a pull request that edits
-a workflow file, so the workflow change is kept apart from the code it
-guards. Until 143 is merged the sequence is run by hand against a throwaway
-container, and a revision that cannot be undone is not caught by CI.
+That sequence is the `migrations` job in `.github/workflows/ci.yml`. It runs
+on every pull request against a `postgres:17-alpine` service, so a revision
+that cannot be undone fails the check instead of being found later by hand.
+
+The same job carries a step named "The review must have actually run". The
+reviewing action refuses to run on a pull request that edits a workflow file
+and reports that as a skip, which reads exactly like a clean review. The
+step looks for a `REVIEW <short sha>` comment on the commit and fails when
+there is none, so a review that did not happen can no longer pass for one.
 
 ## Connecting from your own machine
 
